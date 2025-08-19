@@ -1,14 +1,16 @@
 package iter
 
+import "iter"
+
 // Seq represents a single-value iterator sequence.
 // It calls the yield function for each element in the sequence.
 // If yield returns false, the iteration should stop.
-type Seq[T any] func(yield func(T) bool)
+type Seq[T any] iter.Seq[T]
 
 // Seq2 represents a two-value iterator sequence (typically key-value pairs).
 // It calls the yield function for each pair in the sequence.
 // If yield returns false, the iteration should stop.
-type Seq2[K, V any] func(yield func(K, V) bool)
+type Seq2[K, V any] iter.Seq2[K, V]
 
 // Pair represents a key-value pair.
 // Used for converting between Seq2 and slice representations.
