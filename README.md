@@ -35,6 +35,7 @@ import (
 )
 
 func main() {
+	// Extract even numbers and square them:
 	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
 	s = iter.Filter(s, func(x int) bool { return x%2 == 0 })        // 2, 4
 	s = iter.Map(s, func(x int) int { return x * x })              // 4, 16
@@ -58,14 +59,8 @@ func main() {
 ## 🔬 More Examples
 
 ```go
-// Extract even numbers and square them:
-s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-s = iter.Filter(s, func(x int) bool { return x%2 == 0 })
-s = iter.Map(s, func(x int) int { return x * x })
-fmt.Println(iter.ToSlice(s)) // → [4 16]
-
 // Simple range with step
-r := iter.Range(1, 10) // 1..9
+r := iter.Iota(1, 10) // 1..9
 r = iter.StepBy(r, 3)  // 1, 4, 7
 fmt.Println(iter.ToSlice(r)) // → [1 4 7]
 
@@ -76,43 +71,6 @@ iter.ForEach2(s2, func(k string, v int) {
 	fmt.Printf("%s → %d\n", k, v)
 })
 ```
-
----
-
-## 📁 Package Overview
-
-### 🏁 Sources
-- `FromSlice`, `FromSliceReverse`
-- `FromMap`, `FromPairs`
-- `FromChan`
-
-### 🔧 Transformations
-- `Map`, `MapTo`, `MapWhile`, `Scan`
-- `Filter`, `FilterMap`, `Exclude`
-- `Inspect`, `Enumerate`
-- `Take`, `TakeWhile`, `Skip`, `SkipWhile`
-- `StepBy`, `Unique`, `UniqueBy`
-
-### 🧮 Aggregations
-- `Fold`, `Reduce`, `Find`
-- `All`, `Any`, `Count`
-- `MinBy`, `MaxBy`
-- `CountBy`, `Counter`
-- `Partition`, `SortBy`
-- `Nth`, `Position`, `RPosition`, `IsPartitioned`
-- `Contains`
-
-### 🔗 Combinations & Structure
-- `Chain`, `Zip`, `Zip3`, `Zip4`
-- `Flatten`, `Cycle`
-- `Product`, `ProductBy`
-- `Combinations`, `Permutations`
-- `Windows`, `Chunks`
-
-### 🧵 Core Types
-- `Seq[T]` — sequence of items
-- `Seq2[K, V]` — key-value pair sequence
-- `Pair[K, V]`, `KV[K, V]` — key-value helpers
 
 ---
 
