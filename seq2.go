@@ -88,6 +88,28 @@ func Exclude2[K, V any](s Seq2[K, V], p func(K, V) bool) Seq2[K, V] {
 	}
 }
 
+// FilterMap2 applies a function to each key-value pair and filters out None results.
+//
+// Example:
+//
+//	s := iter.FromMap(map[int]string{1: "a", 2: "bb", 3: "ccc"})
+//	iter.FilterMap2(s, func(k int, v string) (Pair[int, string], bool) {
+//	  if len(v) > 1 {
+//	    return Pair[int, string]{k*10, strings.ToUpper(v)}, true
+//	  }
+//	  return Pair[int, string]{}, false
+//	}) // yields: (20, "BB"), (30, "CCC")
+func FilterMap2[K, V, K2, V2 any](s Seq2[K, V], f func(K, V) (Pair[K2, V2], bool)) Seq2[K2, V2] {
+	return func(yield func(K2, V2) bool) {
+		s(func(k K, v V) bool {
+			if pair, ok := f(k, v); ok {
+				return yield(pair.Key, pair.Value)
+			}
+			return true
+		})
+	}
+}
+
 // Find2 returns the first key-value pair that satisfies the predicate.
 //
 // Example:

@@ -2,6 +2,7 @@ package iter_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	. "github.com/enetx/iter"
@@ -188,5 +189,44 @@ func TestOrderByValueAdvanced(t *testing.T) {
 	if len(result3) != 4 || result3[0].Value != "a" || result3[1].Value != "a" || result3[2].Value != "b" ||
 		result3[3].Value != "b" {
 		t.Errorf("OrderByValue(duplicates) = %v, want values ordered as [a,a,b,b]", result3)
+	}
+}
+
+func TestFilterMap2(t *testing.T) {
+	s := FromMap(map[int]string{1: "a", 2: "bb", 3: "ccc"})
+
+	result := ToMap(FilterMap2(s, func(k int, v string) (Pair[int, string], bool) {
+		if len(v) > 1 {
+			return Pair[int, string]{k * 10, strings.ToUpper(v)}, true
+		}
+		return Pair[int, string]{}, false
+	}))
+
+	expected := map[int]string{20: "BB", 30: "CCC"}
+
+	if len(result) != len(expected) {
+		t.Errorf("FilterMap2() result length = %d, want %d", len(result), len(expected))
+	}
+
+	for k, v := range expected {
+		if result[k] != v {
+			t.Errorf("FilterMap2() result[%d] = %s, want %s", k, result[k], v)
+		}
+	}
+
+	// Test empty map
+	empty := ToMap(FilterMap2(FromMap(map[int]string{}), func(k int, v string) (Pair[int, string], bool) {
+		return Pair[int, string]{k, v}, true
+	}))
+	if len(empty) != 0 {
+		t.Errorf("FilterMap2(empty) = %v, want empty", empty)
+	}
+
+	// Test filter all out
+	allFiltered := ToMap(FilterMap2(s, func(k int, v string) (Pair[int, string], bool) {
+		return Pair[int, string]{k, v}, false // Filter all out
+	}))
+	if len(allFiltered) != 0 {
+		t.Errorf("FilterMap2(filter all) = %v, want empty", allFiltered)
 	}
 }
