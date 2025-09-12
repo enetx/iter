@@ -7,6 +7,50 @@ import (
 	. "github.com/enetx/iter"
 )
 
+func TestNext(t *testing.T) {
+	// Test Next with multiple elements
+	s := FromSlice([]int{1, 2, 3, 4, 5})
+
+	// Get first element
+	val1, rest1, ok1 := Next(s)
+	if !ok1 || val1 != 1 {
+		t.Errorf("Next() first = %v, %v, want 1, true", val1, ok1)
+	}
+
+	// Get second element
+	val2, rest2, ok2 := Next(rest1)
+	if !ok2 || val2 != 2 {
+		t.Errorf("Next() second = %v, %v, want 2, true", val2, ok2)
+	}
+
+	// Check remaining elements
+	remaining := ToSlice(rest2)
+	expected := []int{3, 4, 5}
+	if !reflect.DeepEqual(remaining, expected) {
+		t.Errorf("Next() remaining = %v, want %v", remaining, expected)
+	}
+
+	// Test Next with single element
+	single := FromSlice([]int{42})
+	val, rest, ok := Next(single)
+	if !ok || val != 42 {
+		t.Errorf("Next() single = %v, %v, want 42, true", val, ok)
+	}
+	if rest != nil {
+		restSlice := ToSlice(rest)
+		if len(restSlice) != 0 {
+			t.Errorf("Next() single rest = %v, want empty", restSlice)
+		}
+	}
+
+	// Test Next with empty sequence
+	empty := FromSlice([]int{})
+	val, rest, ok = Next(empty)
+	if ok || val != 0 || rest != nil {
+		t.Errorf("Next() empty = %v, %v, %v, want 0, nil, false", val, rest, ok)
+	}
+}
+
 func TestForEach(t *testing.T) {
 	// Test forEach operation
 	var sum int

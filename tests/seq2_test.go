@@ -8,6 +8,82 @@ import (
 	. "github.com/enetx/iter"
 )
 
+func TestNext2(t *testing.T) {
+	// Test Next2 with multiple pairs
+	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}, {4, "d"}}
+	s := FromPairs(pairs)
+
+	// Get first pair
+	k1, v1, rest1, ok1 := Next2(s)
+	if !ok1 || k1 != 1 || v1 != "a" {
+		t.Errorf("Next2() first = %v, %v, %v, want 1, a, true", k1, v1, ok1)
+	}
+
+	// Get second pair
+	k2, v2, rest2, ok2 := Next2(rest1)
+	if !ok2 || k2 != 2 || v2 != "b" {
+		t.Errorf("Next2() second = %v, %v, %v, want 2, b, true", k2, v2, ok2)
+	}
+
+	// Check remaining pairs
+	remaining := ToPairs(rest2)
+	expected := []Pair[int, string]{{3, "c"}, {4, "d"}}
+	if !reflect.DeepEqual(remaining, expected) {
+		t.Errorf("Next2() remaining = %v, want %v", remaining, expected)
+	}
+
+	// Test Next2 with single pair
+	single := FromPairs([]Pair[int, string]{{42, "test"}})
+	k, v, rest, ok := Next2(single)
+	if !ok || k != 42 || v != "test" {
+		t.Errorf("Next2() single = %v, %v, %v, want 42, test, true", k, v, ok)
+	}
+	if rest != nil {
+		restPairs := ToPairs(rest)
+		if len(restPairs) != 0 {
+			t.Errorf("Next2() single rest = %v, want empty", restPairs)
+		}
+	}
+
+	// Test Next2 with empty sequence
+	empty := FromPairs([]Pair[int, string]{})
+	k, v, rest, ok = Next2(empty)
+	if ok || k != 0 || v != "" || rest != nil {
+		t.Errorf("Next2() empty = %v, %v, %v, %v, want 0, \"\", nil, false", k, v, rest, ok)
+	}
+
+	// Test Next2 iterating through all elements
+	s2 := FromPairs([]Pair[int, string]{{1, "one"}, {2, "two"}, {3, "three"}})
+	count := 0
+	for {
+		k, v, remaining, ok := Next2(s2)
+		if !ok {
+			break
+		}
+		count++
+		s2 = remaining
+
+		// Verify we got expected values
+		switch count {
+		case 1:
+			if k != 1 || v != "one" {
+				t.Errorf("Next2() iteration %d = %v, %v, want 1, one", count, k, v)
+			}
+		case 2:
+			if k != 2 || v != "two" {
+				t.Errorf("Next2() iteration %d = %v, %v, want 2, two", count, k, v)
+			}
+		case 3:
+			if k != 3 || v != "three" {
+				t.Errorf("Next2() iteration %d = %v, %v, want 3, three", count, k, v)
+			}
+		}
+	}
+	if count != 3 {
+		t.Errorf("Next2() iteration count = %v, want 3", count)
+	}
+}
+
 func TestKeys(t *testing.T) {
 	// Test keys operation
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}

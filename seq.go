@@ -1,5 +1,52 @@
 package iter
 
+// Next extracts the first element from the sequence and returns the remaining sequence.
+// Returns (value, remainingSeq, true) if an element exists, or (zero, nil, false) if empty.
+// This is similar to Rust's Iterator::next() method.
+//
+// Example:
+//
+//	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
+//	val, rest, ok := iter.Next(s)
+//	// val = 1, ok = true
+//	// rest yields: 2, 3, 4, 5
+//
+//	val2, rest2, ok2 := iter.Next(rest)
+//	// val2 = 2, ok2 = true
+//	// rest2 yields: 3, 4, 5
+func Next[T any](s Seq[T]) (T, Seq[T], bool) {
+	var first T
+	found := false
+	consumed := false
+
+	s(func(v T) bool {
+		if !consumed {
+			first = v
+			found = true
+			consumed = true
+			return false
+		}
+		return true
+	})
+
+	if !found {
+		return first, nil, false
+	}
+
+	remaining := func(yield func(T) bool) {
+		skip := true
+		s(func(v T) bool {
+			if skip {
+				skip = false
+				return true
+			}
+			return yield(v)
+		})
+	}
+
+	return first, remaining, true
+}
+
 // ForEach applies a function to each element in the sequence.
 //
 // Example:

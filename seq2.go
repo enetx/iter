@@ -2,6 +2,55 @@ package iter
 
 import "slices"
 
+// Next2 extracts the first key-value pair from the sequence and returns the remaining sequence.
+// Returns (key, value, remainingSeq, true) if a pair exists, or (zeroK, zeroV, nil, false) if empty.
+// This is similar to Rust's Iterator::next() method for key-value pairs.
+//
+// Example:
+//
+//	s := iter.FromMap(map[int]string{1: "a", 2: "b", 3: "c"})
+//	k, v, rest, ok := iter.Next2(s)
+//	// k = 1, v = "a", ok = true (order not guaranteed for maps)
+//	// rest yields remaining pairs
+//
+//	k2, v2, rest2, ok2 := iter.Next2(rest)
+//	// k2 = 2, v2 = "b", ok2 = true
+//	// rest2 yields remaining pairs
+func Next2[K, V any](s Seq2[K, V]) (K, V, Seq2[K, V], bool) {
+	var firstK K
+	var firstV V
+	found := false
+	consumed := false
+
+	s(func(k K, v V) bool {
+		if !consumed {
+			firstK = k
+			firstV = v
+			found = true
+			consumed = true
+			return false
+		}
+		return true
+	})
+
+	if !found {
+		return firstK, firstV, nil, false
+	}
+
+	remaining := func(yield func(K, V) bool) {
+		skip := true
+		s(func(k K, v V) bool {
+			if skip {
+				skip = false
+				return true
+			}
+			return yield(k, v)
+		})
+	}
+
+	return firstK, firstV, remaining, true
+}
+
 // ForEach2 applies a function to each key-value pair in the sequence.
 //
 // Example:
