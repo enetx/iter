@@ -84,6 +84,54 @@ func TestNext2(t *testing.T) {
 	}
 }
 
+func TestFirst2(t *testing.T) {
+	// Test First2 with non-empty sequence
+	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	s := FromPairs(pairs)
+	k, v, ok := First2(s)
+	if !ok || k != 1 || v != "a" {
+		t.Errorf("First2() = %v, %v, %v, want 1, a, true", k, v, ok)
+	}
+
+	// Test First2 with empty sequence
+	empty := FromPairs([]Pair[int, string]{})
+	_, _, ok2 := First2(empty)
+	if ok2 {
+		t.Errorf("First2(empty) ok = %v, want false", ok2)
+	}
+
+	// Test First2 with single pair
+	single := FromPairs([]Pair[string, int]{{"hello", 42}})
+	k3, v3, ok3 := First2(single)
+	if !ok3 || k3 != "hello" || v3 != 42 {
+		t.Errorf("First2(single) = %v, %v, %v, want hello, 42, true", k3, v3, ok3)
+	}
+}
+
+func TestLast2(t *testing.T) {
+	// Test Last2 with non-empty sequence
+	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	s := FromPairs(pairs)
+	k, v, ok := Last2(s)
+	if !ok || k != 3 || v != "c" {
+		t.Errorf("Last2() = %v, %v, %v, want 3, c, true", k, v, ok)
+	}
+
+	// Test Last2 with empty sequence
+	empty := FromPairs([]Pair[int, string]{})
+	_, _, ok2 := Last2(empty)
+	if ok2 {
+		t.Errorf("Last2(empty) ok = %v, want false", ok2)
+	}
+
+	// Test Last2 with single pair
+	single := FromPairs([]Pair[string, int]{{"world", 99}})
+	k3, v3, ok3 := Last2(single)
+	if !ok3 || k3 != "world" || v3 != 99 {
+		t.Errorf("Last2(single) = %v, %v, %v, want world, 99, true", k3, v3, ok3)
+	}
+}
+
 func TestKeys(t *testing.T) {
 	// Test keys operation
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}

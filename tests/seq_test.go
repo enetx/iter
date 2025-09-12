@@ -51,6 +51,46 @@ func TestNext(t *testing.T) {
 	}
 }
 
+func TestFirst(t *testing.T) {
+	// Test First with non-empty sequence
+	result, ok := First(FromSlice([]int{1, 2, 3, 4, 5}))
+	if !ok || result != 1 {
+		t.Errorf("First() = %v, %v, want 1, true", result, ok)
+	}
+
+	// Test First with empty sequence
+	_, ok2 := First(FromSlice([]int{}))
+	if ok2 {
+		t.Errorf("First(empty) ok = %v, want false", ok2)
+	}
+
+	// Test First with single element
+	result3, ok3 := First(FromSlice([]string{"hello"}))
+	if !ok3 || result3 != "hello" {
+		t.Errorf("First(single) = %v, %v, want hello, true", result3, ok3)
+	}
+}
+
+func TestLast(t *testing.T) {
+	// Test Last with non-empty sequence
+	result, ok := Last(FromSlice([]int{1, 2, 3, 4, 5}))
+	if !ok || result != 5 {
+		t.Errorf("Last() = %v, %v, want 5, true", result, ok)
+	}
+
+	// Test Last with empty sequence
+	_, ok2 := Last(FromSlice([]int{}))
+	if ok2 {
+		t.Errorf("Last(empty) ok = %v, want false", ok2)
+	}
+
+	// Test Last with single element
+	result3, ok3 := Last(FromSlice([]string{"world"}))
+	if !ok3 || result3 != "world" {
+		t.Errorf("Last(single) = %v, %v, want world, true", result3, ok3)
+	}
+}
+
 func TestForEach(t *testing.T) {
 	// Test forEach operation
 	var sum int

@@ -47,6 +47,44 @@ func Next[T any](s Seq[T]) (T, Seq[T], bool) {
 	return first, remaining, true
 }
 
+// First returns the first element from the sequence.
+// Returns (value, true) if an element exists, or (zero, false) if empty.
+// This is similar to Rust's Iterator::first() method.
+//
+// Example:
+//
+//	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
+//	value, ok := iter.First(s) // 1, true
+func First[T any](s Seq[T]) (T, bool) {
+	var result T
+	found := false
+	s(func(v T) bool {
+		result = v
+		found = true
+		return false
+	})
+	return result, found
+}
+
+// Last returns the last element from the sequence.
+// Returns (value, true) if an element exists, or (zero, false) if empty.
+// This is similar to Rust's Iterator::last() method.
+//
+// Example:
+//
+//	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
+//	value, ok := iter.Last(s) // 5, true
+func Last[T any](s Seq[T]) (T, bool) {
+	var result T
+	found := false
+	s(func(v T) bool {
+		result = v
+		found = true
+		return true
+	})
+	return result, found
+}
+
 // ForEach applies a function to each element in the sequence.
 //
 // Example:

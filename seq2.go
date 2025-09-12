@@ -51,6 +51,49 @@ func Next2[K, V any](s Seq2[K, V]) (K, V, Seq2[K, V], bool) {
 	return firstK, firstV, remaining, true
 }
 
+// First2 returns the first key-value pair from the sequence.
+// Returns (key, value, true) if a pair exists, or (zeroK, zeroV, false) if empty.
+// This is similar to Rust's Iterator::first() method for key-value pairs.
+//
+// Example:
+//
+//	s := iter.FromMap(map[int]string{1: "a", 2: "b", 3: "c"})
+//	k, v, ok := iter.First2(s) // might return: 1, "a", true
+func First2[K, V any](s Seq2[K, V]) (K, V, bool) {
+	var resultK K
+	var resultV V
+	found := false
+	s(func(k K, v V) bool {
+		resultK = k
+		resultV = v
+		found = true
+		return false
+	})
+	return resultK, resultV, found
+}
+
+// Last2 returns the last key-value pair from the sequence.
+// Returns (key, value, true) if a pair exists, or (zeroK, zeroV, false) if empty.
+// This is similar to Rust's Iterator::last() method for key-value pairs.
+//
+// Example:
+//
+//	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+//	s := iter.FromPairs(pairs)
+//	k, v, ok := iter.Last2(s) // 3, "c", true
+func Last2[K, V any](s Seq2[K, V]) (K, V, bool) {
+	var resultK K
+	var resultV V
+	found := false
+	s(func(k K, v V) bool {
+		resultK = k
+		resultV = v
+		found = true
+		return true
+	})
+	return resultK, resultV, found
+}
+
 // ForEach2 applies a function to each key-value pair in the sequence.
 //
 // Example:
