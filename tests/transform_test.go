@@ -104,12 +104,46 @@ func TestUnique(t *testing.T) {
 	}
 }
 
-func TestUniqueBy(t *testing.T) {
-	// Test unique by operation - consecutive elements with same key are removed
-	result := FromSlice([]string{"a", "b", "bb", "ccc", "dd", "e"}).UniqueBy(func(s string) int { return len(s) }).ToSlice()
+func TestUniqueFree(t *testing.T) {
+	// Typed free function: removes all duplicates (also non-adjacent), keeps first occurrences
+	result := Unique(FromSlice([]int{1, 2, 2, 3, 3, 3, 4, 1})).ToSlice()
+	expected := []int{1, 2, 3, 4}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Unique() = %v, want %v", result, expected)
+	}
+
+	// Empty sequence
+	empty := Unique(FromSlice([]int{})).ToSlice()
+	if len(empty) != 0 {
+		t.Errorf("Unique(empty) = %v, want empty slice", empty)
+	}
+
+	// Laziness / early stop: a downstream Take must not consume the whole source
+	consumed := 0
+	src := Seq[int](func(yield func(int) bool) {
+		for _, v := range []int{1, 1, 2, 2, 3, 4} {
+			consumed++
+			if !yield(v) {
+				return
+			}
+		}
+	})
+
+	got := Unique(src).Take(2).ToSlice()
+	if !reflect.DeepEqual(got, []int{1, 2}) {
+		t.Errorf("Unique().Take(2) = %v, want [1 2]", got)
+	}
+	if consumed >= 6 {
+		t.Errorf("Unique consumed the entire source (%d elements) despite early stop", consumed)
+	}
+}
+
+func TestDedupByKey(t *testing.T) {
+	// Test dedup-by-key operation - consecutive elements with same key are removed
+	result := FromSlice([]string{"a", "b", "bb", "ccc", "dd", "e"}).DedupByKey(func(s string) int { return len(s) }).ToSlice()
 	expected := []string{"a", "bb", "ccc", "dd", "e"}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf(".UniqueBy() = %v, want %v", result, expected)
+		t.Errorf(".DedupByKey() = %v, want %v", result, expected)
 	}
 }
 

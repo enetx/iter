@@ -55,6 +55,14 @@ func (a Seq[T]) Equal(b Seq[T]) bool {
 	return a.EqualBy(b, func(x, y T) bool { return reflect.DeepEqual(x, y) })
 }
 
+// EqualBy checks if two sequences are equal using a custom equality function
+// (same length and pairwise-equal elements in the same order).
+//
+// Example:
+//
+//	s1 := iter.FromSlice([]string{"a", "B"})
+//	s2 := iter.FromSlice([]string{"A", "b"})
+//	equal := s1.EqualBy(s2, strings.EqualFold) // true
 func (a Seq[T]) EqualBy(b Seq[T], eq func(T, T) bool) bool {
 	an, as := a.Pull()
 	defer as()

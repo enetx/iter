@@ -101,7 +101,7 @@ func Empty[T any]() Seq[T] { return func(func(T) bool) {} }
 //
 // Example:
 //
-//	s := iter.Take(iter.Repeat(42), 3) // yields: 42, 42, 42
+//	s := iter.Repeat(42).Take(3) // yields: 42, 42, 42
 func Repeat[T any](value T) Seq[T] {
 	return func(yield func(T) bool) {
 		for {
@@ -116,7 +116,7 @@ func Repeat[T any](value T) Seq[T] {
 //
 // Example:
 //
-//	s := iter.Take(iter.RepeatWith(func() int { return rand.Int() }), 3)
+//	s := iter.RepeatWith(func() int { return rand.Int() }).Take(3)
 func RepeatWith[T any](f func() T) Seq[T] {
 	return func(yield func(T) bool) {
 		for {

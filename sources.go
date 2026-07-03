@@ -5,7 +5,7 @@ package iter
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3})
-//	iter.ForEach(s, func(x int) { fmt.Println(x) })
+//	s.ForEach(func(x int) { fmt.Println(x) })
 //	// Output:
 //	// 1
 //	// 2
@@ -26,7 +26,7 @@ func FromSlice[T any](sl []T) Seq[T] {
 // Example:
 //
 //	s := iter.FromSliceReverse([]int{1, 2, 3})
-//	iter.ForEach(s, func(x int) { fmt.Println(x) })
+//	s.ForEach(func(x int) { fmt.Println(x) })
 //	// Output:
 //	// 3
 //	// 2

@@ -177,35 +177,35 @@ func TestFromPairsEarlyTermination(t *testing.T) {
 	}
 }
 
-func TestOrderByKey(t *testing.T) {
+func TestSortByKey(t *testing.T) {
 	// Test orderByKey operation
 	pairs := []Pair[int, string]{{Key: 3, Value: "c"}, {Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
-	result := FromPairs(pairs).OrderByKey(func(a, b int) bool { return a < b }).ToPairs()
+	result := FromPairs(pairs).SortByKey(func(a, b int) bool { return a < b }).ToPairs()
 	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf(".OrderByKey() = %v, want %v", result, expected)
+		t.Errorf(".SortByKey() = %v, want %v", result, expected)
 	}
 
 	// Test with empty sequence
-	result2 := FromPairs([]Pair[int, string]{}).OrderByKey(func(a, b int) bool { return a < b }).ToPairs()
+	result2 := FromPairs([]Pair[int, string]{}).SortByKey(func(a, b int) bool { return a < b }).ToPairs()
 	if len(result2) != 0 {
-		t.Errorf("empty.OrderByKey() = %v, want empty", result2)
+		t.Errorf("empty.SortByKey() = %v, want empty", result2)
 	}
 }
 
-func TestOrderByValue(t *testing.T) {
+func TestSortByValue(t *testing.T) {
 	// Test orderByValue operation
 	pairs := []Pair[int, string]{{Key: 1, Value: "c"}, {Key: 2, Value: "a"}, {Key: 3, Value: "b"}}
-	result := FromPairs(pairs).OrderByValue(func(a, b string) bool { return a < b }).ToPairs()
+	result := FromPairs(pairs).SortByValue(func(a, b string) bool { return a < b }).ToPairs()
 	expected := []Pair[int, string]{{Key: 2, Value: "a"}, {Key: 3, Value: "b"}, {Key: 1, Value: "c"}}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf(".OrderByValue() = %v, want %v", result, expected)
+		t.Errorf(".SortByValue() = %v, want %v", result, expected)
 	}
 
 	// Test with empty sequence
-	result2 := FromPairs([]Pair[int, string]{}).OrderByValue(func(a, b string) bool { return a < b }).ToPairs()
+	result2 := FromPairs([]Pair[int, string]{}).SortByValue(func(a, b string) bool { return a < b }).ToPairs()
 	if len(result2) != 0 {
-		t.Errorf("empty.OrderByValue() = %v, want empty", result2)
+		t.Errorf("empty.SortByValue() = %v, want empty", result2)
 	}
 }
 
@@ -267,52 +267,52 @@ func TestSortBy2(t *testing.T) {
 	}
 }
 
-func TestOrderByKeyAdvanced(t *testing.T) {
-	// Test OrderByKey with single element
+func TestSortByKeyAdvanced(t *testing.T) {
+	// Test SortByKey with single element
 	single := []Pair[int, string]{{Key: 1, Value: "a"}}
-	result := FromPairs(single).OrderByKey(func(a, b int) bool { return a < b }).ToPairs()
+	result := FromPairs(single).SortByKey(func(a, b int) bool { return a < b }).ToPairs()
 	if !reflect.DeepEqual(result, single) {
-		t.Errorf("single.OrderByKey() = %v, want %v", result, single)
+		t.Errorf("single.SortByKey() = %v, want %v", result, single)
 	}
 
-	// Test OrderByKey with already sorted data
+	// Test SortByKey with already sorted data
 	sorted := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
-	result2 := FromPairs(sorted).OrderByKey(func(a, b int) bool { return a < b }).ToPairs()
+	result2 := FromPairs(sorted).SortByKey(func(a, b int) bool { return a < b }).ToPairs()
 	if !reflect.DeepEqual(result2, sorted) {
-		t.Errorf("already sorted.OrderByKey() = %v, want %v", result2, sorted)
+		t.Errorf("already sorted.SortByKey() = %v, want %v", result2, sorted)
 	}
 
-	// Test OrderByKey with duplicate keys
+	// Test SortByKey with duplicate keys
 	duplicates := []Pair[int, string]{{Key: 2, Value: "b"}, {Key: 1, Value: "a"}, {Key: 2, Value: "c"}, {Key: 1, Value: "d"}}
-	result3 := FromPairs(duplicates).OrderByKey(func(a, b int) bool { return a < b }).ToPairs()
+	result3 := FromPairs(duplicates).SortByKey(func(a, b int) bool { return a < b }).ToPairs()
 	// Should have keys in order 1, 1, 2, 2
 	if len(result3) != 4 || result3[0].Key != 1 || result3[1].Key != 1 || result3[2].Key != 2 || result3[3].Key != 2 {
-		t.Errorf("duplicates.OrderByKey() = %v, want keys ordered as [1,1,2,2]", result3)
+		t.Errorf("duplicates.SortByKey() = %v, want keys ordered as [1,1,2,2]", result3)
 	}
 }
 
-func TestOrderByValueAdvanced(t *testing.T) {
-	// Test OrderByValue with single element
+func TestSortByValueAdvanced(t *testing.T) {
+	// Test SortByValue with single element
 	single := []Pair[int, string]{{Key: 1, Value: "a"}}
-	result := FromPairs(single).OrderByValue(func(a, b string) bool { return a < b }).ToPairs()
+	result := FromPairs(single).SortByValue(func(a, b string) bool { return a < b }).ToPairs()
 	if !reflect.DeepEqual(result, single) {
-		t.Errorf("single.OrderByValue() = %v, want %v", result, single)
+		t.Errorf("single.SortByValue() = %v, want %v", result, single)
 	}
 
-	// Test OrderByValue with already sorted data
+	// Test SortByValue with already sorted data
 	sorted := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
-	result2 := FromPairs(sorted).OrderByValue(func(a, b string) bool { return a < b }).ToPairs()
+	result2 := FromPairs(sorted).SortByValue(func(a, b string) bool { return a < b }).ToPairs()
 	if !reflect.DeepEqual(result2, sorted) {
-		t.Errorf("already sorted.OrderByValue() = %v, want %v", result2, sorted)
+		t.Errorf("already sorted.SortByValue() = %v, want %v", result2, sorted)
 	}
 
-	// Test OrderByValue with duplicate values
+	// Test SortByValue with duplicate values
 	duplicates := []Pair[int, string]{{Key: 2, Value: "b"}, {Key: 1, Value: "a"}, {Key: 3, Value: "b"}, {Key: 4, Value: "a"}}
-	result3 := FromPairs(duplicates).OrderByValue(func(a, b string) bool { return a < b }).ToPairs()
+	result3 := FromPairs(duplicates).SortByValue(func(a, b string) bool { return a < b }).ToPairs()
 	// Should have values in order a, a, b, b
 	if len(result3) != 4 || result3[0].Value != "a" || result3[1].Value != "a" || result3[2].Value != "b" ||
 		result3[3].Value != "b" {
-		t.Errorf("duplicates.OrderByValue() = %v, want values ordered as [a,a,b,b]", result3)
+		t.Errorf("duplicates.SortByValue() = %v, want values ordered as [a,a,b,b]", result3)
 	}
 }
 
@@ -352,5 +352,106 @@ func TestFilterMap2(t *testing.T) {
 	}))
 	if len(allFiltered) != 0 {
 		t.Errorf("filter all.FilterMap() = %v, want empty", allFiltered)
+	}
+}
+
+func TestTakeWhile2(t *testing.T) {
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}, {Key: 1, Value: "d"}}
+
+	result := FromPairs(pairs).TakeWhile(func(k int, _ string) bool { return k < 3 }).ToPairs()
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf(".TakeWhile() = %v, want %v", result, expected)
+	}
+
+	// Predicate false on the first pair yields nothing
+	none := FromPairs(pairs).TakeWhile(func(int, string) bool { return false }).ToPairs()
+	if len(none) != 0 {
+		t.Errorf(".TakeWhile(false) = %v, want empty", none)
+	}
+
+	// Predicate always true yields everything
+	all := FromPairs(pairs).TakeWhile(func(int, string) bool { return true }).ToPairs()
+	if !reflect.DeepEqual(all, pairs) {
+		t.Errorf(".TakeWhile(true) = %v, want %v", all, pairs)
+	}
+
+	// Empty sequence
+	empty := FromPairs([]Pair[int, string]{}).TakeWhile(func(int, string) bool { return true }).ToPairs()
+	if len(empty) != 0 {
+		t.Errorf("empty.TakeWhile() = %v, want empty", empty)
+	}
+}
+
+func TestSkipWhile2(t *testing.T) {
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}, {Key: 1, Value: "d"}}
+
+	// Skips only the leading run; the trailing {1, "d"} is kept
+	result := FromPairs(pairs).SkipWhile(func(k int, _ string) bool { return k < 3 }).ToPairs()
+	expected := []Pair[int, string]{{Key: 3, Value: "c"}, {Key: 1, Value: "d"}}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf(".SkipWhile() = %v, want %v", result, expected)
+	}
+
+	// Predicate always true skips everything
+	none := FromPairs(pairs).SkipWhile(func(int, string) bool { return true }).ToPairs()
+	if len(none) != 0 {
+		t.Errorf(".SkipWhile(true) = %v, want empty", none)
+	}
+
+	// Predicate false on the first pair keeps everything
+	all := FromPairs(pairs).SkipWhile(func(int, string) bool { return false }).ToPairs()
+	if !reflect.DeepEqual(all, pairs) {
+		t.Errorf(".SkipWhile(false) = %v, want %v", all, pairs)
+	}
+
+	// Empty sequence
+	empty := FromPairs([]Pair[int, string]{}).SkipWhile(func(int, string) bool { return true }).ToPairs()
+	if len(empty) != 0 {
+		t.Errorf("empty.SkipWhile() = %v, want empty", empty)
+	}
+}
+
+func TestMapWhile2(t *testing.T) {
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: -1, Value: "c"}, {Key: 4, Value: "d"}}
+
+	// Stops at the first false; {4, "d"} is not reached
+	result := FromPairs(pairs).MapWhile(func(k int, v string) (Pair[int, string], bool) {
+		if k > 0 {
+			return Pair[int, string]{Key: k * 10, Value: strings.ToUpper(v)}, true
+		}
+		return Pair[int, string]{}, false
+	}).ToPairs()
+	expected := []Pair[int, string]{{Key: 10, Value: "A"}, {Key: 20, Value: "B"}}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf(".MapWhile() = %v, want %v", result, expected)
+	}
+
+	// Type-changing MapWhile
+	typed := FromPairs(pairs).MapWhile(func(k int, v string) (Pair[string, int], bool) {
+		if k > 0 {
+			return Pair[string, int]{Key: v, Value: k}, true
+		}
+		return Pair[string, int]{}, false
+	}).ToPairs()
+	expectedTyped := []Pair[string, int]{{Key: "a", Value: 1}, {Key: "b", Value: 2}}
+	if !reflect.DeepEqual(typed, expectedTyped) {
+		t.Errorf(".MapWhile() typed = %v, want %v", typed, expectedTyped)
+	}
+
+	// False on the first pair yields nothing
+	none := FromPairs(pairs).MapWhile(func(int, string) (Pair[int, string], bool) {
+		return Pair[int, string]{}, false
+	}).ToPairs()
+	if len(none) != 0 {
+		t.Errorf(".MapWhile(false) = %v, want empty", none)
+	}
+
+	// Empty sequence
+	empty := FromPairs([]Pair[int, string]{}).MapWhile(func(k int, v string) (Pair[int, string], bool) {
+		return Pair[int, string]{Key: k, Value: v}, true
+	}).ToPairs()
+	if len(empty) != 0 {
+		t.Errorf("empty.MapWhile() = %v, want empty", empty)
 	}
 }

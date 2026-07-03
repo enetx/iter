@@ -198,6 +198,30 @@ func (s Seq2[K, V]) FilterMap[K2, V2 any](f func(K, V) (Pair[K2, V2], bool)) Seq
 	}
 }
 
+// MapWhile applies a function to key-value pairs while it returns true, stopping at the first false.
+// The key and value types of the result may differ from the input types.
+//
+// Example:
+//
+//	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {-1, "c"}, {4, "d"}}
+//	s := iter.FromPairs(pairs)
+//	s.MapWhile(func(k int, v string) (Pair[int, string], bool) {
+//	  if k > 0 {
+//	    return Pair[int, string]{k * 10, strings.ToUpper(v)}, true
+//	  }
+//	  return Pair[int, string]{}, false
+//	}) // yields: (10, "A"), (20, "B")
+func (s Seq2[K, V]) MapWhile[K2, V2 any](f func(K, V) (Pair[K2, V2], bool)) Seq2[K2, V2] {
+	return func(yield func(K2, V2) bool) {
+		s(func(k K, v V) bool {
+			if pair, ok := f(k, v); ok {
+				return yield(pair.Key, pair.Value)
+			}
+			return false
+		})
+	}
+}
+
 // Find returns the first key-value pair that satisfies the predicate.
 //
 // Example:
@@ -241,8 +265,9 @@ func (s Seq2[K, V]) Values() Seq[V] {
 	return func(y func(V) bool) { s(func(_ K, v V) bool { return y(v) }) }
 }
 
-// OrderByKey sorts the sequence by keys using the comparison function.
-func (s Seq2[K, V]) OrderByKey(less func(a, b K) bool) Seq2[K, V] {
+// SortByKey sorts the sequence by keys using the comparison function.
+// Note: This collects all elements into a slice first.
+func (s Seq2[K, V]) SortByKey(less func(a, b K) bool) Seq2[K, V] {
 	buf := s.ToPairs()
 	slices.SortFunc(buf, func(a, b Pair[K, V]) int {
 		switch {
@@ -257,8 +282,9 @@ func (s Seq2[K, V]) OrderByKey(less func(a, b K) bool) Seq2[K, V] {
 	return FromPairs(buf)
 }
 
-// OrderByValue sorts the sequence by values using the comparison function.
-func (s Seq2[K, V]) OrderByValue(less func(a, b V) bool) Seq2[K, V] {
+// SortByValue sorts the sequence by values using the comparison function.
+// Note: This collects all elements into a slice first.
+func (s Seq2[K, V]) SortByValue(less func(a, b V) bool) Seq2[K, V] {
 	buf := s.ToPairs()
 	slices.SortFunc(buf, func(a, b Pair[K, V]) int {
 		switch {
@@ -318,6 +344,44 @@ func (s Seq2[K, V]) Skip(n int) Seq2[K, V] {
 	}
 }
 
+// TakeWhile yields key-value pairs while the predicate returns true.
+//
+// Example:
+//
+//	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+//	s := iter.FromPairs(pairs)
+//	s.TakeWhile(func(k int, v string) bool { return k < 3 }) // yields: (1, "a"), (2, "b")
+func (s Seq2[K, V]) TakeWhile(pred func(K, V) bool) Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		s(func(k K, v V) bool {
+			if !pred(k, v) {
+				return false
+			}
+			return yield(k, v)
+		})
+	}
+}
+
+// SkipWhile skips key-value pairs while the predicate returns true, then yields the rest.
+//
+// Example:
+//
+//	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+//	s := iter.FromPairs(pairs)
+//	s.SkipWhile(func(k int, v string) bool { return k < 2 }) // yields: (2, "b"), (3, "c")
+func (s Seq2[K, V]) SkipWhile(pred func(K, V) bool) Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		skipping := true
+		s(func(k K, v V) bool {
+			if skipping && pred(k, v) {
+				return true
+			}
+			skipping = false
+			return yield(k, v)
+		})
+	}
+}
+
 // StepBy returns every nth key-value pair from the sequence.
 //
 // Example:
@@ -343,7 +407,8 @@ func (s Seq2[K, V]) StepBy(step int) Seq2[K, V] {
 	}
 }
 
-// SortBy sorts the sequence using the provided comparison function on Pair pairs.
+// SortBy sorts the sequence using the provided comparison function on Pair values.
+// Note: This collects all elements into a slice first.
 func (s Seq2[K, V]) SortBy(less func(a, b Pair[K, V]) bool) Seq2[K, V] {
 	buf := s.ToPairs()
 	slices.SortFunc(buf, func(a, b Pair[K, V]) int {
@@ -416,7 +481,7 @@ func (s Seq2[K, V]) Fold[A any](acc A, f func(A, K, V) A) A {
 	return acc
 }
 
-// Reduce reduces the Seq2 to a single Pair pair.
+// Reduce reduces the Seq2 to a single Pair.
 // Returns false if the sequence is empty.
 //
 // Example:

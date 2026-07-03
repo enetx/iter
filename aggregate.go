@@ -232,19 +232,24 @@ func (s Seq[T]) Position(pred func(T) bool) (int, bool) {
 }
 
 // RPosition returns the index of the last element that satisfies the predicate.
+// It performs a single forward pass over the sequence, tracking the last match,
+// and uses O(1) memory.
 //
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 3, 2})
 //	pos, ok := s.RPosition(func(x int) bool { return x == 3 }) // 4, true
 func (s Seq[T]) RPosition(pred func(T) bool) (int, bool) {
-	slice := s.ToSlice()
-	for i := len(slice) - 1; i >= 0; i-- {
-		if pred(slice[i]) {
-			return i, true
+	last := -1
+	idx := 0
+	s(func(v T) bool {
+		if pred(v) {
+			last = idx
 		}
-	}
-	return -1, false
+		idx++
+		return true
+	})
+	return last, last >= 0
 }
 
 // IsPartitioned checks if the sequence is partitioned according to the predicate.
@@ -259,11 +264,12 @@ func (s Seq[T]) IsPartitioned(pred func(T) bool) bool {
 	foundFalse := false
 	result := true
 	s(func(v T) bool {
-		if foundFalse && pred(v) {
+		p := pred(v)
+		if foundFalse && p {
 			result = false
 			return false
 		}
-		if !pred(v) {
+		if !p {
 			foundFalse = true
 		}
 		return true

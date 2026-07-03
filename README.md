@@ -64,14 +64,12 @@ Requires **Go 1.27+**: transformations are generic methods, so `Map`, `FilterMap
 
 ```go
 // Simple range with step
-r := iter.Iota(1, 10) // 1..9
-r = iter.StepBy(r, 3)  // 1, 4, 7
-fmt.Println(iter.ToSlice(r)) // → [1 4 7]
+r := iter.Iota(1, 10).StepBy(3) // 1, 4, 7
+fmt.Println(r.ToSlice()) // → [1 4 7]
 
 // Iterate over a map
 m := map[string]int{"a": 1, "b": 2}
-s2 := iter.FromMap(m)
-iter.ForEach2(s2, func(k string, v int) {
+iter.FromMap(m).ForEach(func(k string, v int) {
 	fmt.Printf("%s → %d\n", k, v)
 })
 ```

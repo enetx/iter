@@ -104,7 +104,7 @@ func (s Seq[T]) ToChan(ctx context.Context) chan T {
 	return ch
 }
 
-// ToChan converts a key-value sequence to a channel of Pair pairs.
+// ToChan converts a key-value sequence to a channel of Pair values.
 // The channel is closed when the sequence is exhausted or context is cancelled.
 //
 // Example:

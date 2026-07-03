@@ -2,30 +2,29 @@ package iter
 
 // Cycle creates an infinite sequence by repeating the given sequence.
 //
+// If the source is empty (or becomes exhausted and stops producing elements),
+// the resulting sequence ends instead of spinning forever. The source is not
+// consumed an extra time up front, so sources with side effects are iterated
+// only as part of the actual cycling.
+//
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3})
 //	s.Cycle().Take(7) // yields: 1, 2, 3, 1, 2, 3, 1
 func (s Seq[T]) Cycle() Seq[T] {
 	return func(yield func(T) bool) {
-		has := false
-		s(func(T) bool {
-			has = true
-			return false
-		})
-		if !has {
-			return
-		}
 		for {
+			yielded := false
 			keep := true
 			s(func(v T) bool {
+				yielded = true
 				if !yield(v) {
 					keep = false
 					return false
 				}
 				return true
 			})
-			if !keep {
+			if !keep || !yielded {
 				return
 			}
 		}
