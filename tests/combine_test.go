@@ -22,7 +22,7 @@ func TestZip(t *testing.T) {
 	s1 := FromSlice([]int{1, 2, 3})
 	s2 := FromSlice([]string{"a", "b"})
 	result := s1.Zip(s2).ToPairs()
-	expected := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".Zip() = %v, want %v", result, expected)
 	}
@@ -114,23 +114,23 @@ func TestChain2(t *testing.T) {
 	s1 := FromSlice([]string{"a", "b"}).Enumerate(0)
 	s2 := FromSlice([]string{"c", "d"}).Enumerate(10)
 	result := s1.Chain(s2).ToPairs()
-	expected := []Pair[int, string]{{0, "a"}, {1, "b"}, {10, "c"}, {11, "d"}}
+	expected := []Pair[int, string]{{Key: 0, Value: "a"}, {Key: 1, Value: "b"}, {Key: 10, Value: "c"}, {Key: 11, Value: "d"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".Chain() = %v, want %v", result, expected)
 	}
 }
 
 func TestChain2EarlyStopInFirstSequence(t *testing.T) {
-	s1 := FromPairs([]Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}})
-	s2 := FromPairs([]Pair[int, string]{{4, "d"}, {5, "e"}})
+	s1 := FromPairs([]Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}})
+	s2 := FromPairs([]Pair[int, string]{{Key: 4, Value: "d"}, {Key: 5, Value: "e"}})
 
 	var result []Pair[int, string]
 	s1.Chain(s2)(func(k int, v string) bool {
-		result = append(result, Pair[int, string]{k, v})
+		result = append(result, Pair[int, string]{Key: k, Value: v})
 		return k < 2 // Stop early in first sequence
 	})
 
-	expected := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Chain2 early stop in first sequence = %v, want %v", result, expected)
 	}
@@ -165,9 +165,9 @@ func TestChain2NoSequences(t *testing.T) {
 }
 
 func TestChain2EarlyTermination(t *testing.T) {
-	s1 := FromPairs([]Pair[int, string]{{1, "a"}, {2, "b"}})
-	s2 := FromPairs([]Pair[int, string]{{3, "c"}, {4, "d"}})
-	s3 := FromPairs([]Pair[int, string]{{5, "e"}, {6, "f"}})
+	s1 := FromPairs([]Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}})
+	s2 := FromPairs([]Pair[int, string]{{Key: 3, Value: "c"}, {Key: 4, Value: "d"}})
+	s3 := FromPairs([]Pair[int, string]{{Key: 5, Value: "e"}, {Key: 6, Value: "f"}})
 
 	count := 0
 	s1.Chain(s2, s3)(func(k int, v string) bool {
@@ -219,7 +219,7 @@ func TestZipEarlyStop(t *testing.T) {
 	s2 := FromSlice([]string{"a", "b"}) // shorter sequence
 
 	result := s1.Zip(s2).ToPairs()
-	expected := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("different lengths.Zip() = %v, want %v", result, expected)
 	}

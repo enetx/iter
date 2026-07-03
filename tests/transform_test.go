@@ -89,7 +89,7 @@ func TestFilterMap(t *testing.T) {
 func TestEnumerate(t *testing.T) {
 	// Test enumerate operation
 	result := FromSlice([]string{"a", "b", "c"}).Enumerate(0).ToPairs()
-	expected := []Pair[int, string]{{0, "a"}, {1, "b"}, {2, "c"}}
+	expected := []Pair[int, string]{{Key: 0, Value: "a"}, {Key: 1, Value: "b"}, {Key: 2, Value: "c"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".Enumerate() = %v, want %v", result, expected)
 	}
@@ -115,11 +115,11 @@ func TestUniqueBy(t *testing.T) {
 
 func TestMap2(t *testing.T) {
 	// Test map2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	result := FromPairs(pairs).Map(func(k int, v string) (int, string) {
 		return k * 2, v + v
 	}).ToPairs()
-	expected := []Pair[int, string]{{2, "aa"}, {4, "bb"}}
+	expected := []Pair[int, string]{{Key: 2, Value: "aa"}, {Key: 4, Value: "bb"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".Map() = %v, want %v", result, expected)
 	}
@@ -127,9 +127,9 @@ func TestMap2(t *testing.T) {
 
 func TestFilter2(t *testing.T) {
 	// Test filter2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	result := FromPairs(pairs).Filter(func(k int, v string) bool { return k%2 == 0 }).ToPairs()
-	expected := []Pair[int, string]{{2, "b"}}
+	expected := []Pair[int, string]{{Key: 2, Value: "b"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".Filter() = %v, want %v", result, expected)
 	}
@@ -137,9 +137,9 @@ func TestFilter2(t *testing.T) {
 
 func TestExclude2(t *testing.T) {
 	// Test exclude2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	result := FromPairs(pairs).Exclude(func(k int, v string) bool { return k%2 == 0 }).ToPairs()
-	expected := []Pair[int, string]{{1, "a"}, {3, "c"}}
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 3, Value: "c"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".Exclude() = %v, want %v", result, expected)
 	}
@@ -148,7 +148,7 @@ func TestExclude2(t *testing.T) {
 func TestInspect2(t *testing.T) {
 	// Test inspect2 operation
 	var sum int
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	FromPairs(pairs).Inspect(func(k int, v string) { sum += k }).ToPairs()
 	if sum != 3 {
 		t.Errorf(".Inspect() sum = %v, want 3", sum)
@@ -158,7 +158,7 @@ func TestInspect2(t *testing.T) {
 func TestEnumerateNonZeroStart(t *testing.T) {
 	// Test enumerate with non-zero start
 	result := FromSlice([]string{"a", "b"}).Enumerate(5).ToPairs()
-	expected := []Pair[int, string]{{5, "a"}, {6, "b"}}
+	expected := []Pair[int, string]{{Key: 5, Value: "a"}, {Key: 6, Value: "b"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("start=5.Enumerate() = %v, want %v", result, expected)
 	}

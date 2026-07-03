@@ -21,7 +21,7 @@ func TestToSlice(t *testing.T) {
 
 func TestPull2(t *testing.T) {
 	// Test pull2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	next, stop := FromPairs(pairs).Pull()
 	defer stop()
 
@@ -58,9 +58,9 @@ func TestContext2(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	result := FromPairs(pairs).Context(ctx).ToPairs()
-	expected := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".Context() = %v, want %v", result, expected)
 	}
@@ -89,7 +89,7 @@ func TestToChan2(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	ch := FromPairs(pairs).ToChan(ctx)
 
 	var result []Pair[int, string]
@@ -97,7 +97,7 @@ func TestToChan2(t *testing.T) {
 		result = append(result, pair)
 	}
 
-	expected := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".ToChan() = %v, want %v", result, expected)
 	}
@@ -156,7 +156,7 @@ func TestContext2Cancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	count := 0
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	FromPairs(pairs).Context(ctx)(func(k int, v string) bool {
 		count++
 		if count == 2 {
@@ -177,7 +177,7 @@ func TestContext2AlreadyCanceled(t *testing.T) {
 	cancel() // Cancel before calling Context2
 
 	count := 0
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	FromPairs(pairs).Context(ctx)(func(k int, v string) bool {
 		count++
 		return true
@@ -192,6 +192,7 @@ func TestContext2AlreadyCanceled(t *testing.T) {
 func TestToChanContextCancellation(t *testing.T) {
 	// Test toChan with context cancellation
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	ch := FromSlice([]int{1, 2, 3, 4, 5}).ToChan(ctx)
 
@@ -230,8 +231,9 @@ func TestToChanContextAlreadyCanceled(t *testing.T) {
 func TestToChan2ContextCancellation(t *testing.T) {
 	// Test toChan2 with context cancellation
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}, {4, "d"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}, {Key: 4, Value: "d"}}
 	ch := FromPairs(pairs).ToChan(ctx)
 
 	var result []Pair[int, string]
@@ -253,7 +255,7 @@ func TestToChan2ContextAlreadyCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel before calling ToChan2
 
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	ch := FromPairs(pairs).ToChan(ctx)
 
 	var result []Pair[int, string]
@@ -335,7 +337,7 @@ func TestToChan2ContextCancellationDuringIteration(t *testing.T) {
 
 func TestToMap(t *testing.T) {
 	// Test basic toMap operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	result := ToMap(FromPairs(pairs))
 
 	expected := map[int]string{1: "a", 2: "b", 3: "c"}
@@ -350,7 +352,7 @@ func TestToMap(t *testing.T) {
 	}
 
 	// Test duplicate keys (later values should overwrite earlier ones)
-	pairs3 := []Pair[int, string]{{1, "a"}, {2, "b"}, {1, "c"}}
+	pairs3 := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 1, Value: "c"}}
 	result3 := ToMap(FromPairs(pairs3))
 	if result3[1] != "c" {
 		t.Errorf("ToMap(duplicate keys) result[1] = %v, want 'c'", result3[1])
@@ -377,7 +379,7 @@ func TestContext2EarlyReturn(t *testing.T) {
 	ctx := context.Background()
 
 	count := 0
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}, {4, "d"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}, {Key: 4, Value: "d"}}
 	FromPairs(pairs).Context(ctx)(func(k int, v string) bool {
 		count++
 		return k != 3 // Stop when we see key 3
@@ -416,7 +418,7 @@ func TestToChan2Buffering(t *testing.T) {
 	// Test ToChan2 with buffering (should not block)
 	ctx := context.Background()
 
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	ch := FromPairs(pairs).ToChan(ctx)
 
 	// Read first pair immediately
@@ -431,7 +433,7 @@ func TestToChan2Buffering(t *testing.T) {
 		remaining = append(remaining, pair)
 	}
 
-	expected := []Pair[int, string]{{2, "b"}, {3, "c"}}
+	expected := []Pair[int, string]{{Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	if !reflect.DeepEqual(remaining, expected) {
 		t.Errorf("ToChan2 buffering remaining = %v, want %v", remaining, expected)
 	}

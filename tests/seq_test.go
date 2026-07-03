@@ -201,7 +201,7 @@ func TestNth(t *testing.T) {
 func TestForEach2(t *testing.T) {
 	// Test forEach2 operation
 	var sum int
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	FromPairs(pairs).ForEach(func(k int, v string) { sum += k })
 	if sum != 3 {
 		t.Errorf(".ForEach() sum = %v, want 3", sum)
@@ -210,7 +210,7 @@ func TestForEach2(t *testing.T) {
 
 func TestCount2(t *testing.T) {
 	// Test count2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	result := FromPairs(pairs).Count()
 	if result != 2 {
 		t.Errorf(".Count() = %v, want 2", result)
@@ -220,7 +220,7 @@ func TestCount2(t *testing.T) {
 func TestRange2(t *testing.T) {
 	// Test range2 operation
 	var sum int
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	FromPairs(pairs).Range(func(k int, v string) bool {
 		sum += k
 		return k < 2
@@ -232,9 +232,9 @@ func TestRange2(t *testing.T) {
 
 func TestTake2(t *testing.T) {
 	// Test take2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	result := FromPairs(pairs).Take(2).ToPairs()
-	expected := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".Take() = %v, want %v", result, expected)
 	}
@@ -242,9 +242,9 @@ func TestTake2(t *testing.T) {
 
 func TestSkip2(t *testing.T) {
 	// Test skip2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	result := FromPairs(pairs).Skip(1).ToPairs()
-	expected := []Pair[int, string]{{2, "b"}, {3, "c"}}
+	expected := []Pair[int, string]{{Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".Skip() = %v, want %v", result, expected)
 	}
@@ -252,9 +252,9 @@ func TestSkip2(t *testing.T) {
 
 func TestStepBy2(t *testing.T) {
 	// Test stepBy2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}, {4, "d"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}, {Key: 4, Value: "d"}}
 	result := FromPairs(pairs).StepBy(2).ToPairs()
-	expected := []Pair[int, string]{{1, "a"}, {3, "c"}}
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 3, Value: "c"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf(".StepBy() = %v, want %v", result, expected)
 	}
@@ -262,7 +262,7 @@ func TestStepBy2(t *testing.T) {
 
 func TestNth2(t *testing.T) {
 	// Test nth2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}}
 	k, v, found := FromPairs(pairs).Nth(1)
 	if !found || k != 2 || v != "b" {
 		t.Errorf(".Nth() = %v, %v, %v, want 2, b, true", k, v, found)
@@ -298,7 +298,7 @@ func TestTakeZero(t *testing.T) {
 
 func TestTake2Zero(t *testing.T) {
 	// Test take2 with zero
-	pairs := []Pair[int, string]{{1, "a"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}}
 	result := FromPairs(pairs).Take(0).ToPairs()
 	if len(result) != 0 {
 		t.Errorf("0.Take() = %v, want empty slice", result)
@@ -316,9 +316,9 @@ func TestSkipZero(t *testing.T) {
 
 func TestSkip2Zero(t *testing.T) {
 	// Test skip2 with zero
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	result := FromPairs(pairs).Skip(0).ToPairs()
-	expected := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	expected := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("0.Skip() = %v, want %v", result, expected)
 	}
@@ -334,7 +334,7 @@ func TestStepByZero(t *testing.T) {
 
 func TestStepBy2Zero(t *testing.T) {
 	// Test stepBy2 with zero step
-	pairs := []Pair[int, string]{{1, "a"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}}
 	result := FromPairs(pairs).StepBy(0).ToPairs()
 	if len(result) != 0 {
 		t.Errorf("0.StepBy() = %v, want empty slice", result)
@@ -351,7 +351,7 @@ func TestStepByZeroStepEdgeCase(t *testing.T) {
 
 func TestStepBy2ZeroStepEdgeCase(t *testing.T) {
 	// Test stepBy2 with zero step edge case
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	result := FromPairs(pairs).StepBy(0).ToPairs()
 	if len(result) != 0 {
 		t.Errorf("StepBy2 zero step = %v, want empty slice", result)
@@ -373,7 +373,7 @@ func TestStepByEarlyTermination(t *testing.T) {
 func TestStepBy2EarlyTermination(t *testing.T) {
 	// Test stepBy2 with early termination
 	count := 0
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}, {4, "d"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}, {Key: 3, Value: "c"}, {Key: 4, Value: "d"}}
 	FromPairs(pairs).StepBy(2)(func(k int, v string) bool {
 		count++
 		return count < 2

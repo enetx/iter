@@ -93,7 +93,7 @@ func TestContains(t *testing.T) {
 
 func TestFind2(t *testing.T) {
 	// Test find2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "bb"}, {3, "c"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "bb"}, {Key: 3, Value: "c"}}
 	k, v, found := FromPairs(pairs).Find(func(key int, val string) bool { return len(val) > 1 })
 	if !found || k != 2 || v != "bb" {
 		t.Errorf(".Find() = %v, %v, %v, want 2, bb, true", k, v, found)
@@ -102,7 +102,7 @@ func TestFind2(t *testing.T) {
 
 func TestAny2(t *testing.T) {
 	// Test any2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "bb"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "bb"}}
 	result := FromPairs(pairs).Any(func(k int, v string) bool { return len(v) > 1 })
 	if !result {
 		t.Errorf(".Any() = %v, want true", result)
@@ -111,14 +111,14 @@ func TestAny2(t *testing.T) {
 
 func TestAll2(t *testing.T) {
 	// Test all2 operation
-	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
+	pairs := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	result := FromPairs(pairs).All(func(k int, v string) bool { return len(v) == 1 })
 	if !result {
 		t.Errorf(".All() = %v, want true", result)
 	}
 
 	// Test all2 with early false
-	pairs2 := []Pair[int, string]{{1, "a"}, {2, "bb"}, {3, "c"}}
+	pairs2 := []Pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "bb"}, {Key: 3, Value: "c"}}
 	result2 := FromPairs(pairs2).All(func(k int, v string) bool { return len(v) == 1 })
 	if result2 {
 		t.Errorf("early false.All() = %v, want false", result2)
@@ -132,7 +132,7 @@ func TestAll2(t *testing.T) {
 
 	// Test all2 early termination
 	count := 0
-	pairs3 := []Pair[int, string]{{1, "aa"}, {2, "bb"}, {3, "cc"}}
+	pairs3 := []Pair[int, string]{{Key: 1, Value: "aa"}, {Key: 2, Value: "bb"}, {Key: 3, Value: "cc"}}
 	FromPairs(pairs3).All(func(k int, v string) bool {
 		count++
 		return false // First check returns false, should terminate
@@ -144,7 +144,7 @@ func TestAll2(t *testing.T) {
 
 func TestFold2(t *testing.T) {
 	// Test fold2 operation
-	pairs := []Pair[int, int]{{1, 10}, {2, 20}}
+	pairs := []Pair[int, int]{{Key: 1, Value: 10}, {Key: 2, Value: 20}}
 	result := FromPairs(pairs).Fold(0, func(acc, k, v int) int { return acc + k + v })
 	if result != 33 { // 0 + 1 + 10 + 2 + 20
 		t.Errorf(".Fold() = %v, want 33", result)
@@ -153,9 +153,9 @@ func TestFold2(t *testing.T) {
 
 func TestReduce2(t *testing.T) {
 	// Test reduce2 operation
-	pairs := []Pair[int, int]{{1, 10}, {2, 20}}
+	pairs := []Pair[int, int]{{Key: 1, Value: 10}, {Key: 2, Value: 20}}
 	result, found := FromPairs(pairs).Reduce(func(a, b Pair[int, int]) Pair[int, int] {
-		return Pair[int, int]{a.Key + b.Key, a.Value + b.Value}
+		return Pair[int, int]{Key: a.Key + b.Key, Value: a.Value + b.Value}
 	})
 	if !found || result.Key != 3 || result.Value != 30 {
 		t.Errorf(".Reduce() = %v, %v, want {3, 30}, true", result, found)
