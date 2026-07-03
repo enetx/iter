@@ -9,15 +9,15 @@ import "reflect"
 //
 //	s1 := iter.FromSlice([]int{1, 2, 3})
 //	s2 := iter.FromSlice([]int{1, 2, 4})
-//	result := iter.Cmp(s1, s2, func(a, b int) int {
+//	result := s1.Cmp(s2, func(a, b int) int {
 //	  if a < b { return -1 }
 //	  if a > b { return 1 }
 //	  return 0
 //	}) // -1
-func Cmp[T any](a, b Seq[T], cmp func(T, T) int) int {
-	an, as := Pull(a)
+func (a Seq[T]) Cmp(b Seq[T], cmp func(T, T) int) int {
+	an, as := a.Pull()
 	defer as()
-	bn, bs := Pull(b)
+	bn, bs := b.Pull()
 	defer bs()
 
 	for {
@@ -46,19 +46,19 @@ func Cmp[T any](a, b Seq[T], cmp func(T, T) int) int {
 //
 //	s1 := iter.FromSlice([]int{1, 2, 3})
 //	s2 := iter.FromSlice([]int{1, 2, 3})
-//	equal := iter.Equal(s1, s2) // true
-func Equal[T any](a, b Seq[T]) bool {
+//	equal := s1.Equal(s2) // true
+func (a Seq[T]) Equal(b Seq[T]) bool {
 	var zero T
 	if reflect.ValueOf(zero).Comparable() {
-		return EqualBy(a, b, func(x, y T) bool { return any(x) == any(y) })
+		return a.EqualBy(b, func(x, y T) bool { return any(x) == any(y) })
 	}
-	return EqualBy(a, b, func(x, y T) bool { return reflect.DeepEqual(x, y) })
+	return a.EqualBy(b, func(x, y T) bool { return reflect.DeepEqual(x, y) })
 }
 
-func EqualBy[T any](a, b Seq[T], eq func(T, T) bool) bool {
-	an, as := Pull(a)
+func (a Seq[T]) EqualBy(b Seq[T], eq func(T, T) bool) bool {
+	an, as := a.Pull()
 	defer as()
-	bn, bs := Pull(b)
+	bn, bs := b.Pull()
 	defer bs()
 
 	for {
@@ -83,11 +83,11 @@ func EqualBy[T any](a, b Seq[T], eq func(T, T) bool) bool {
 //
 //	s1 := iter.FromSlice([]int{1, 2, 3})
 //	s2 := iter.FromSlice([]int{1, 2, 4})
-//	isLess := iter.Lt(s1, s2, func(a, b int) bool { return a < b }) // true
-func Lt[T any](a, b Seq[T], less func(T, T) bool) bool {
-	an, as := Pull(a)
+//	isLess := s1.Lt(s2, func(a, b int) bool { return a < b }) // true
+func (a Seq[T]) Lt(b Seq[T], less func(T, T) bool) bool {
+	an, as := a.Pull()
 	defer as()
-	bn, bs := Pull(b)
+	bn, bs := b.Pull()
 	defer bs()
 
 	for {
@@ -116,11 +116,11 @@ func Lt[T any](a, b Seq[T], less func(T, T) bool) bool {
 //
 //	s1 := iter.FromSlice([]int{1, 2, 3})
 //	s2 := iter.FromSlice([]int{1, 2, 3})
-//	isLessOrEqual := iter.Le(s1, s2, func(a, b int) bool { return a < b }) // true
-func Le[T any](a, b Seq[T], less func(T, T) bool) bool {
-	an, as := Pull(a)
+//	isLessOrEqual := s1.Le(s2, func(a, b int) bool { return a < b }) // true
+func (a Seq[T]) Le(b Seq[T], less func(T, T) bool) bool {
+	an, as := a.Pull()
 	defer as()
-	bn, bs := Pull(b)
+	bn, bs := b.Pull()
 	defer bs()
 
 	for {
@@ -149,11 +149,11 @@ func Le[T any](a, b Seq[T], less func(T, T) bool) bool {
 //
 //	s1 := iter.FromSlice([]int{1, 2, 4})
 //	s2 := iter.FromSlice([]int{1, 2, 3})
-//	isGreater := iter.Gt(s1, s2, func(a, b int) bool { return a < b }) // true
-func Gt[T any](a, b Seq[T], less func(T, T) bool) bool {
-	an, as := Pull(a)
+//	isGreater := s1.Gt(s2, func(a, b int) bool { return a < b }) // true
+func (a Seq[T]) Gt(b Seq[T], less func(T, T) bool) bool {
+	an, as := a.Pull()
 	defer as()
-	bn, bs := Pull(b)
+	bn, bs := b.Pull()
 	defer bs()
 
 	for {
@@ -182,11 +182,11 @@ func Gt[T any](a, b Seq[T], less func(T, T) bool) bool {
 //
 //	s1 := iter.FromSlice([]int{1, 2, 3})
 //	s2 := iter.FromSlice([]int{1, 2, 3})
-//	isGreaterOrEqual := iter.Ge(s1, s2, func(a, b int) bool { return a < b }) // true
-func Ge[T any](a, b Seq[T], less func(T, T) bool) bool {
-	an, as := Pull(a)
+//	isGreaterOrEqual := s1.Ge(s2, func(a, b int) bool { return a < b }) // true
+func (a Seq[T]) Ge(b Seq[T], less func(T, T) bool) bool {
+	an, as := a.Pull()
 	defer as()
-	bn, bs := Pull(b)
+	bn, bs := b.Pull()
 	defer bs()
 
 	for {

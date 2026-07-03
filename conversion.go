@@ -11,19 +11,19 @@ import (
 //
 // Example:
 //
-//	next, stop := iter.Pull(iter.FromSlice([]int{1, 2, 3}))
+//	next, stop := iter.FromSlice([]int{1, 2, 3}).Pull()
 //	defer stop()
 //	for {
 //	  v, ok := next()
 //	  if !ok { break }
 //	  fmt.Println(v)
 //	}
-func Pull[T any](s Seq[T]) (next func() (T, bool), stop func()) {
+func (s Seq[T]) Pull() (next func() (T, bool), stop func()) {
 	return iter.Pull(iter.Seq[T](s))
 }
 
-// Pull2 converts a push-style iterator (Seq2) to a pull-style iterator.
-func Pull2[K, V any](s Seq2[K, V]) (next func() (K, V, bool), stop func()) {
+// Pull converts a push-style iterator (Seq2) to a pull-style iterator.
+func (s Seq2[K, V]) Pull() (next func() (K, V, bool), stop func()) {
 	return iter.Pull2(iter.Seq2[K, V](s))
 }
 
@@ -34,8 +34,8 @@ func Pull2[K, V any](s Seq2[K, V]) (next func() (K, V, bool), stop func()) {
 //
 //	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 //	defer cancel()
-//	s := iter.Context(iter.FromSlice([]int{1, 2, 3}), ctx)
-func Context[T any](s Seq[T], ctx context.Context) Seq[T] {
+//	s := iter.FromSlice([]int{1, 2, 3}).Context(ctx)
+func (s Seq[T]) Context(ctx context.Context) Seq[T] {
 	return func(yield func(T) bool) {
 		if err := ctx.Err(); err != nil {
 			return
@@ -51,15 +51,15 @@ func Context[T any](s Seq[T], ctx context.Context) Seq[T] {
 	}
 }
 
-// Context2 wraps a key-value sequence with context cancellation.
+// Context wraps a key-value sequence with context cancellation.
 // If the context is cancelled, iteration stops early.
 //
 // Example:
 //
 //	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 //	defer cancel()
-//	s := iter.Context2(iter.FromMap(map[int]string{1: "a", 2: "b"}), ctx)
-func Context2[K, V any](s Seq2[K, V], ctx context.Context) Seq2[K, V] {
+//	s := iter.FromMap(map[int]string{1: "a", 2: "b"}).Context(ctx)
+func (s Seq2[K, V]) Context(ctx context.Context) Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		if err := ctx.Err(); err != nil {
 			return
@@ -81,11 +81,11 @@ func Context2[K, V any](s Seq2[K, V], ctx context.Context) Seq2[K, V] {
 // Example:
 //
 //	ctx := context.Background()
-//	ch := iter.ToChan(iter.FromSlice([]int{1, 2, 3}), ctx)
+//	ch := iter.FromSlice([]int{1, 2, 3}).ToChan(ctx)
 //	for v := range ch {
 //	  fmt.Println(v)
 //	}
-func ToChan[T any](s Seq[T], ctx context.Context) chan T {
+func (s Seq[T]) ToChan(ctx context.Context) chan T {
 	ch := make(chan T)
 	go func() {
 		defer close(ch)
@@ -104,17 +104,17 @@ func ToChan[T any](s Seq[T], ctx context.Context) chan T {
 	return ch
 }
 
-// ToChan2 converts a key-value sequence to a channel of Pair pairs.
+// ToChan converts a key-value sequence to a channel of Pair pairs.
 // The channel is closed when the sequence is exhausted or context is cancelled.
 //
 // Example:
 //
 //	ctx := context.Background()
-//	ch := iter.ToChan2(iter.FromMap(map[int]string{1: "a", 2: "b"}), ctx)
+//	ch := iter.FromMap(map[int]string{1: "a", 2: "b"}).ToChan(ctx)
 //	for kv := range ch {
-//	  fmt.Printf("%d: %s\n", kv.K, kv.V)
+//	  fmt.Printf("%d: %s\n", kv.Key, kv.Value)
 //	}
-func ToChan2[K, V any](s Seq2[K, V], ctx context.Context) chan Pair[K, V] {
+func (s Seq2[K, V]) ToChan(ctx context.Context) chan Pair[K, V] {
 	ch := make(chan Pair[K, V])
 	go func() {
 		defer close(ch)
@@ -137,9 +137,8 @@ func ToChan2[K, V any](s Seq2[K, V], ctx context.Context) chan Pair[K, V] {
 //
 // Example:
 //
-//	s := iter.FromSlice([]int{1, 2, 3})
-//	sl := iter.ToSlice(s) // [1, 2, 3]
-func ToSlice[T any](s Seq[T]) []T {
+//	sl := iter.FromSlice([]int{1, 2, 3}).ToSlice() // [1, 2, 3]
+func (s Seq[T]) ToSlice() []T {
 	out := make([]T, 0)
 	s(func(v T) bool {
 		out = append(out, v)
@@ -150,6 +149,8 @@ func ToSlice[T any](s Seq[T]) []T {
 
 // ToMap collects all key-value pairs into a map.
 // Later pairs with the same key will overwrite earlier ones.
+// It remains a free function because it requires K to be comparable,
+// which cannot be expressed as a constraint on the receiver's type parameter.
 func ToMap[K comparable, V any](s Seq2[K, V]) map[K]V {
 	m := make(map[K]V)
 	s(func(k K, v V) bool {
@@ -160,7 +161,7 @@ func ToMap[K comparable, V any](s Seq2[K, V]) map[K]V {
 }
 
 // ToPairs collects all key-value pairs into a slice of Pair structs.
-func ToPairs[K, V any](s Seq2[K, V]) []Pair[K, V] {
+func (s Seq2[K, V]) ToPairs() []Pair[K, V] {
 	out := make([]Pair[K, V], 0)
 	s(func(k K, v V) bool {
 		out = append(out, Pair[K, V]{k, v})

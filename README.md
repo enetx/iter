@@ -35,14 +35,17 @@ import (
 )
 
 func main() {
-	// Extract even numbers and square them:
-	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-	s = iter.Filter(s, func(x int) bool { return x%2 == 0 })        // 2, 4
-	s = iter.Map(s, func(x int) int { return x * x })              // 4, 16
-	out := iter.ToSlice(s)
+	// Extract even numbers and square them — chained, Rust-style:
+	out := iter.FromSlice([]int{1, 2, 3, 4, 5}).
+		Filter(func(x int) bool { return x%2 == 0 }). // 2, 4
+		Map(func(x int) int { return x * x }).        // 4, 16
+		ToSlice()
 	fmt.Println(out) // [4 16]
 }
 ```
+
+Requires **Go 1.27+**: transformations are generic methods, so `Map`, `FilterMap`, `Scan`,
+`Fold`, `Zip` can change element types right in the chain.
 
 ---
 
@@ -51,8 +54,9 @@ func main() {
 - ✅ **Lazy sequences** — transformations are not applied until iteration begins.
 - ✅ **Generics-powered** — works with any types `T`, `U`, structs, etc.
 - ✅ **Zero-allocation** — avoids unnecessary memory allocations.
-- ✅ **Functional API** — each transformation is a pure function: `Map`, `Filter`, `Take`, `Skip`, `StepBy`, `Flatten`, `Zip`, `Enumerate`, `Fold`, `Reduce`, and many more.
-- ✅ **Supports pairs, maps, channels** — `Seq2`, `FromMap`, `FromChan`, and beyond.
+- ✅ **Chainable methods** — every transformation is a method: `Map`, `Filter`, `Take`, `Skip`, `StepBy`, `Zip`, `Enumerate`, `Fold`, `Reduce`, and many more. Type-changing transformations are generic methods (Go 1.27).
+- ✅ **Supports pairs, maps, channels** — `Seq2` with the same method set (no `*2` suffixes), `FromMap`, `FromChan`, and beyond.
+- ✅ **Free functions where methods can't go** — element-type constraints (`Dedup`, `Contains`, `Counter`, `ToMap`) and slice-of-element results (`Windows`, `Chunks`, `Flatten`, `Combinations`, `Permutations`).
 
 ---
 

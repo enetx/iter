@@ -12,32 +12,32 @@ import (
 
 func TestToSlice(t *testing.T) {
 	// Test toSlice operation
-	result := ToSlice(FromSlice([]int{1, 2, 3}))
+	result := FromSlice([]int{1, 2, 3}).ToSlice()
 	expected := []int{1, 2, 3}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ToSlice() = %v, want %v", result, expected)
+		t.Errorf(".ToSlice() = %v, want %v", result, expected)
 	}
 }
 
 func TestPull2(t *testing.T) {
 	// Test pull2 operation
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
-	next, stop := Pull2(FromPairs(pairs))
+	next, stop := FromPairs(pairs).Pull()
 	defer stop()
 
 	k1, v1, ok1 := next()
 	if !ok1 || k1 != 1 || v1 != "a" {
-		t.Errorf("Pull2() first = %v, %v, %v, want 1, a, true", k1, v1, ok1)
+		t.Errorf(".Pull() first = %v, %v, %v, want 1, a, true", k1, v1, ok1)
 	}
 
 	k2, v2, ok2 := next()
 	if !ok2 || k2 != 2 || v2 != "b" {
-		t.Errorf("Pull2() second = %v, %v, %v, want 2, b, true", k2, v2, ok2)
+		t.Errorf(".Pull() second = %v, %v, %v, want 2, b, true", k2, v2, ok2)
 	}
 
 	_, _, ok3 := next()
 	if ok3 {
-		t.Errorf("Pull2() third ok = %v, want false", ok3)
+		t.Errorf(".Pull() third ok = %v, want false", ok3)
 	}
 }
 
@@ -46,10 +46,10 @@ func TestContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	result := ToSlice(Context(FromSlice([]int{1, 2, 3}), ctx))
+	result := FromSlice([]int{1, 2, 3}).Context(ctx).ToSlice()
 	expected := []int{1, 2, 3}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Context() = %v, want %v", result, expected)
+		t.Errorf(".Context() = %v, want %v", result, expected)
 	}
 }
 
@@ -59,10 +59,10 @@ func TestContext2(t *testing.T) {
 	defer cancel()
 
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
-	result := ToPairs(Context2(FromPairs(pairs), ctx))
+	result := FromPairs(pairs).Context(ctx).ToPairs()
 	expected := []Pair[int, string]{{1, "a"}, {2, "b"}}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Context2() = %v, want %v", result, expected)
+		t.Errorf(".Context() = %v, want %v", result, expected)
 	}
 }
 
@@ -71,7 +71,7 @@ func TestToChan(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	ch := ToChan(FromSlice([]int{1, 2, 3}), ctx)
+	ch := FromSlice([]int{1, 2, 3}).ToChan(ctx)
 
 	var result []int
 	for val := range ch {
@@ -80,7 +80,7 @@ func TestToChan(t *testing.T) {
 
 	expected := []int{1, 2, 3}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ToChan() = %v, want %v", result, expected)
+		t.Errorf(".ToChan() = %v, want %v", result, expected)
 	}
 }
 
@@ -90,7 +90,7 @@ func TestToChan2(t *testing.T) {
 	defer cancel()
 
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}}
-	ch := ToChan2(FromPairs(pairs), ctx)
+	ch := FromPairs(pairs).ToChan(ctx)
 
 	var result []Pair[int, string]
 	for pair := range ch {
@@ -99,7 +99,7 @@ func TestToChan2(t *testing.T) {
 
 	expected := []Pair[int, string]{{1, "a"}, {2, "b"}}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ToChan2() = %v, want %v", result, expected)
+		t.Errorf(".ToChan() = %v, want %v", result, expected)
 	}
 }
 
@@ -109,7 +109,7 @@ func TestContextCancellation(t *testing.T) {
 	cancel() // Cancel immediately
 
 	count := 0
-	Context(FromSlice([]int{1, 2, 3, 4, 5}), ctx)(func(x int) bool {
+	FromSlice([]int{1, 2, 3, 4, 5}).Context(ctx)(func(x int) bool {
 		count++
 		return true
 	})
@@ -125,7 +125,7 @@ func TestContextCancelDuringIteration(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	count := 0
-	Context(FromSlice([]int{1, 2, 3, 4, 5}), ctx)(func(x int) bool {
+	FromSlice([]int{1, 2, 3, 4, 5}).Context(ctx)(func(x int) bool {
 		count++
 		if x == 2 {
 			cancel() // Cancel during iteration
@@ -145,7 +145,7 @@ func TestContextAlreadyCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	result := ToSlice(Context(FromSlice([]int{1, 2, 3}), ctx))
+	result := FromSlice([]int{1, 2, 3}).Context(ctx).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("ContextAlreadyCanceled = %v, want empty slice", result)
 	}
@@ -157,7 +157,7 @@ func TestContext2Cancellation(t *testing.T) {
 
 	count := 0
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
-	Context2(FromPairs(pairs), ctx)(func(k int, v string) bool {
+	FromPairs(pairs).Context(ctx)(func(k int, v string) bool {
 		count++
 		if count == 2 {
 			cancel() // Cancel after processing 2 items
@@ -178,7 +178,7 @@ func TestContext2AlreadyCanceled(t *testing.T) {
 
 	count := 0
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
-	Context2(FromPairs(pairs), ctx)(func(k int, v string) bool {
+	FromPairs(pairs).Context(ctx)(func(k int, v string) bool {
 		count++
 		return true
 	})
@@ -193,7 +193,7 @@ func TestToChanContextCancellation(t *testing.T) {
 	// Test toChan with context cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 
-	ch := ToChan(FromSlice([]int{1, 2, 3, 4, 5}), ctx)
+	ch := FromSlice([]int{1, 2, 3, 4, 5}).ToChan(ctx)
 
 	var result []int
 	for val := range ch {
@@ -214,7 +214,7 @@ func TestToChanContextAlreadyCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel before calling ToChan
 
-	ch := ToChan(FromSlice([]int{1, 2, 3, 4, 5}), ctx)
+	ch := FromSlice([]int{1, 2, 3, 4, 5}).ToChan(ctx)
 
 	var result []int
 	for val := range ch {
@@ -232,7 +232,7 @@ func TestToChan2ContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}, {4, "d"}}
-	ch := ToChan2(FromPairs(pairs), ctx)
+	ch := FromPairs(pairs).ToChan(ctx)
 
 	var result []Pair[int, string]
 	for pair := range ch {
@@ -254,7 +254,7 @@ func TestToChan2ContextAlreadyCanceled(t *testing.T) {
 	cancel() // Cancel before calling ToChan2
 
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
-	ch := ToChan2(FromPairs(pairs), ctx)
+	ch := FromPairs(pairs).ToChan(ctx)
 
 	var result []Pair[int, string]
 	for pair := range ch {
@@ -273,7 +273,7 @@ func TestToChanContextCancellationDuringIteration(t *testing.T) {
 	defer cancel()
 
 	// Create a slow sequence
-	slowSeq := func(yield func(int) bool) {
+	slowSeq := Seq[int](func(yield func(int) bool) {
 		for i := 1; i <= 10; i++ {
 			select {
 			case <-ctx.Done():
@@ -285,9 +285,9 @@ func TestToChanContextCancellationDuringIteration(t *testing.T) {
 				}
 			}
 		}
-	}
+	})
 
-	ch := ToChan(slowSeq, ctx)
+	ch := slowSeq.ToChan(ctx)
 
 	var result []int
 	for val := range ch {
@@ -306,7 +306,7 @@ func TestToChan2ContextCancellationDuringIteration(t *testing.T) {
 	defer cancel()
 
 	// Create a slow sequence
-	slowSeq := func(yield func(int, string) bool) {
+	slowSeq := Seq2[int, string](func(yield func(int, string) bool) {
 		for i := 1; i <= 10; i++ {
 			select {
 			case <-ctx.Done():
@@ -318,9 +318,9 @@ func TestToChan2ContextCancellationDuringIteration(t *testing.T) {
 				}
 			}
 		}
-	}
+	})
 
-	ch := ToChan2(slowSeq, ctx)
+	ch := slowSeq.ToChan(ctx)
 
 	var result []Pair[int, string]
 	for pair := range ch {
@@ -362,7 +362,7 @@ func TestContextEarlyReturn(t *testing.T) {
 	ctx := context.Background()
 
 	count := 0
-	Context(FromSlice([]int{1, 2, 3, 4, 5}), ctx)(func(x int) bool {
+	FromSlice([]int{1, 2, 3, 4, 5}).Context(ctx)(func(x int) bool {
 		count++
 		return x != 3 // Stop when we see 3
 	})
@@ -378,7 +378,7 @@ func TestContext2EarlyReturn(t *testing.T) {
 
 	count := 0
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}, {4, "d"}}
-	Context2(FromPairs(pairs), ctx)(func(k int, v string) bool {
+	FromPairs(pairs).Context(ctx)(func(k int, v string) bool {
 		count++
 		return k != 3 // Stop when we see key 3
 	})
@@ -392,7 +392,7 @@ func TestToChanBuffering(t *testing.T) {
 	// Test ToChan with buffering (should not block)
 	ctx := context.Background()
 
-	ch := ToChan(FromSlice([]int{1, 2, 3}), ctx)
+	ch := FromSlice([]int{1, 2, 3}).ToChan(ctx)
 
 	// Read first value immediately
 	val1, ok1 := <-ch
@@ -417,7 +417,7 @@ func TestToChan2Buffering(t *testing.T) {
 	ctx := context.Background()
 
 	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
-	ch := ToChan2(FromPairs(pairs), ctx)
+	ch := FromPairs(pairs).ToChan(ctx)
 
 	// Read first pair immediately
 	pair1, ok1 := <-ch

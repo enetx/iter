@@ -8,15 +8,15 @@ import (
 )
 
 func TestCycle(t *testing.T) {
-	result := ToSlice(Take(Cycle(FromSlice([]int{1, 2})), 5))
+	result := FromSlice([]int{1, 2}).Cycle().Take(5).ToSlice()
 	expected := []int{1, 2, 1, 2, 1}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Cycle() = %v, want %v", result, expected)
+		t.Errorf(".Cycle() = %v, want %v", result, expected)
 	}
 }
 
 func TestDedup(t *testing.T) {
-	result := ToSlice(Dedup(FromSlice([]int{1, 1, 2, 2, 3, 1, 1})))
+	result := Dedup(FromSlice([]int{1, 1, 2, 2, 3, 1, 1})).ToSlice()
 	expected := []int{1, 2, 3, 1}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Dedup() = %v, want %v", result, expected)
@@ -24,31 +24,31 @@ func TestDedup(t *testing.T) {
 }
 
 func TestDedupBy(t *testing.T) {
-	result := ToSlice(DedupBy(FromSlice([]int{1, -1, 2, 2, -2, 3}), func(a, b int) bool {
+	result := FromSlice([]int{1, -1, 2, 2, -2, 3}).DedupBy(func(a, b int) bool {
 		return (a < 0) == (b < 0)
-	}))
+	}).ToSlice()
 	expected := []int{1, -1, 2, -2, 3}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("DedupBy() = %v, want %v", result, expected)
+		t.Errorf(".DedupBy() = %v, want %v", result, expected)
 	}
 }
 
 func TestIntersperse(t *testing.T) {
-	result := ToSlice(Intersperse(FromSlice([]int{1, 2, 3}), 0))
+	result := FromSlice([]int{1, 2, 3}).Intersperse(0).ToSlice()
 	expected := []int{1, 0, 2, 0, 3}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Intersperse() = %v, want %v", result, expected)
+		t.Errorf(".Intersperse() = %v, want %v", result, expected)
 	}
 
 	// Test empty sequence
-	result2 := ToSlice(Intersperse(FromSlice([]int{}), 0))
+	result2 := FromSlice([]int{}).Intersperse(0).ToSlice()
 	if len(result2) != 0 {
-		t.Errorf("Intersperse(empty) = %v, want empty", result2)
+		t.Errorf("empty.Intersperse() = %v, want empty", result2)
 	}
 }
 
 func TestFlatten(t *testing.T) {
-	result := ToSlice(Flatten(FromSlice([][]int{{1, 2}, {3, 4}, {5}})))
+	result := Flatten(FromSlice([][]int{{1, 2}, {3, 4}, {5}})).ToSlice()
 	expected := []int{1, 2, 3, 4, 5}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Flatten() = %v, want %v", result, expected)
@@ -61,7 +61,7 @@ func TestFlattenSeq(t *testing.T) {
 		FromSlice([]int{3, 4}),
 		FromSlice([]int{5}),
 	}
-	result := ToSlice(FlattenSeq(FromSlice(seqs)))
+	result := FlattenSeq(FromSlice(seqs)).ToSlice()
 	expected := []int{1, 2, 3, 4, 5}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("FlattenSeq() = %v, want %v", result, expected)
@@ -74,7 +74,7 @@ func TestFlattenSeqWithEmpty(t *testing.T) {
 		FromSlice([]int{}), // empty sequence
 		FromSlice([]int{3, 4}),
 	}
-	result := ToSlice(FlattenSeq(FromSlice(seqs)))
+	result := FlattenSeq(FromSlice(seqs)).ToSlice()
 	expected := []int{1, 2, 3, 4}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("FlattenSeq(with empty) = %v, want %v", result, expected)
@@ -89,7 +89,7 @@ func TestFlattenSeqEarlyTermination(t *testing.T) {
 	}
 
 	count := 0
-	Range(FlattenSeq(FromSlice(seqs)), func(x int) bool {
+	FlattenSeq(FromSlice(seqs)).Range(func(x int) bool {
 		count++
 		return x != 5 // Stop when we reach 5
 	})
@@ -105,7 +105,7 @@ func TestFlattenSeqAllEmpty(t *testing.T) {
 		FromSlice([]int{}),
 		FromSlice([]int{}),
 	}
-	result := ToSlice(FlattenSeq(FromSlice(seqs)))
+	result := FlattenSeq(FromSlice(seqs)).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("FlattenSeq(all empty) = %v, want empty", result)
 	}
@@ -113,28 +113,28 @@ func TestFlattenSeqAllEmpty(t *testing.T) {
 
 func TestFlattenSeqEmpty(t *testing.T) {
 	// Empty sequence of sequences
-	result := ToSlice(FlattenSeq(FromSlice([]Seq[int]{})))
+	result := FlattenSeq(FromSlice([]Seq[int]{})).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("FlattenSeq(empty seq of seqs) = %v, want empty", result)
 	}
 }
 
 func TestCombinations(t *testing.T) {
-	result := ToSlice(Combinations(FromSlice([]int{1, 2, 3, 4}), 2))
+	result := Combinations(FromSlice([]int{1, 2, 3, 4}), 2).ToSlice()
 	expected := [][]int{{1, 2}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Combinations() = %v, want %v", result, expected)
 	}
 
 	// Test k > n
-	result2 := ToSlice(Combinations(FromSlice([]int{1, 2}), 5))
+	result2 := Combinations(FromSlice([]int{1, 2}), 5).ToSlice()
 	if len(result2) != 0 {
 		t.Errorf("Combinations(k>n) = %v, want empty", result2)
 	}
 }
 
 func TestPermutations(t *testing.T) {
-	result := ToSlice(Permutations(FromSlice([]int{1, 2, 3})))
+	result := Permutations(FromSlice([]int{1, 2, 3})).ToSlice()
 	expected := [][]int{
 		{1, 2, 3}, {2, 1, 3}, {3, 1, 2}, {1, 3, 2}, {2, 3, 1}, {3, 2, 1},
 	}
@@ -144,15 +144,15 @@ func TestPermutations(t *testing.T) {
 }
 
 func TestIntersperseSingle(t *testing.T) {
-	result := ToSlice(Intersperse(FromSlice([]int{42}), 0))
+	result := FromSlice([]int{42}).Intersperse(0).ToSlice()
 	expected := []int{42}
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Intersperse(single) = %v, want %v", result, expected)
+		t.Errorf("single.Intersperse() = %v, want %v", result, expected)
 	}
 }
 
 func TestFlattenEmpty(t *testing.T) {
-	result := ToSlice(Flatten(FromSlice([][]int{{}, {1, 2}, {}})))
+	result := Flatten(FromSlice([][]int{{}, {1, 2}, {}})).ToSlice()
 	expected := []int{1, 2}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Flatten(with empty slices) = %v, want %v", result, expected)
@@ -160,14 +160,14 @@ func TestFlattenEmpty(t *testing.T) {
 }
 
 func TestCombinationsZeroK(t *testing.T) {
-	result := ToSlice(Combinations(FromSlice([]int{1, 2, 3}), 0))
+	result := Combinations(FromSlice([]int{1, 2, 3}), 0).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("Combinations(k=0) = %v, want empty", result)
 	}
 }
 
 func TestPermutationsEmpty(t *testing.T) {
-	result := ToSlice(Permutations(FromSlice([]int{})))
+	result := Permutations(FromSlice([]int{})).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("Permutations(empty) = %v, want empty", result)
 	}
@@ -175,7 +175,7 @@ func TestPermutationsEmpty(t *testing.T) {
 
 func TestIntersperseEarlyTermination(t *testing.T) {
 	count := 0
-	Range(Intersperse(FromSlice([]int{1, 2, 3, 4}), 0), func(int) bool {
+	FromSlice([]int{1, 2, 3, 4}).Intersperse(0).Range(func(int) bool {
 		count++
 		return count < 4 // Stop early
 	})
@@ -189,7 +189,7 @@ func TestFlattenEarlyTermination(t *testing.T) {
 	slices := [][]int{{1, 2}, {3, 4}, {5, 6}}
 
 	count := 0
-	Range(Flatten(FromSlice(slices)), func(x int) bool {
+	Flatten(FromSlice(slices)).Range(func(x int) bool {
 		count++
 		return x != 4 // Stop at element 4
 	})
@@ -201,7 +201,7 @@ func TestFlattenEarlyTermination(t *testing.T) {
 
 func TestCombinationsEarlyTermination(t *testing.T) {
 	count := 0
-	Range(Combinations(FromSlice([]int{1, 2, 3, 4}), 2), func(combo []int) bool {
+	Combinations(FromSlice([]int{1, 2, 3, 4}), 2).Range(func(combo []int) bool {
 		count++
 		return !reflect.DeepEqual(combo, []int{1, 3}) // Stop when we see [1,3]
 	})
@@ -213,7 +213,7 @@ func TestCombinationsEarlyTermination(t *testing.T) {
 
 func TestPermutationsEarlyTermination(t *testing.T) {
 	count := 0
-	Range(Permutations(FromSlice([]int{1, 2, 3})), func(perm []int) bool {
+	Permutations(FromSlice([]int{1, 2, 3})).Range(func(perm []int) bool {
 		count++
 		return !reflect.DeepEqual(perm, []int{1, 3, 2}) // Stop when we see [1,3,2]
 	})
@@ -225,7 +225,7 @@ func TestPermutationsEarlyTermination(t *testing.T) {
 
 func TestCycleEarlyTermination(t *testing.T) {
 	count := 0
-	Range(Cycle(FromSlice([]int{1, 2, 3})), func(x int) bool {
+	FromSlice([]int{1, 2, 3}).Cycle().Range(func(x int) bool {
 		count++
 		return count < 7 // Stop after 7 elements
 	})
@@ -237,22 +237,22 @@ func TestCycleEarlyTermination(t *testing.T) {
 
 func TestCycleEmpty(t *testing.T) {
 	// Cycle of empty sequence should return empty
-	result := ToSlice(Take(Cycle(FromSlice([]int{})), 5))
+	result := FromSlice([]int{}).Cycle().Take(5).ToSlice()
 	if len(result) != 0 {
-		t.Errorf("Cycle(empty) = %v, want empty", result)
+		t.Errorf("empty.Cycle() = %v, want empty", result)
 	}
 }
 
 func TestDedupEmpty(t *testing.T) {
-	result := ToSlice(Dedup(FromSlice([]int{})))
+	result := Dedup(FromSlice([]int{})).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("Dedup(empty) = %v, want empty", result)
 	}
 }
 
 func TestDedupByEmpty(t *testing.T) {
-	result := ToSlice(DedupBy(FromSlice([]int{}), func(a, b int) bool { return a == b }))
+	result := FromSlice([]int{}).DedupBy(func(a, b int) bool { return a == b }).ToSlice()
 	if len(result) != 0 {
-		t.Errorf("DedupBy(empty) = %v, want empty", result)
+		t.Errorf("empty.DedupBy() = %v, want empty", result)
 	}
 }

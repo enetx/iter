@@ -5,8 +5,8 @@ package iter
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3})
-//	iter.Take(iter.Cycle(s), 7) // yields: 1, 2, 3, 1, 2, 3, 1
-func Cycle[T any](s Seq[T]) Seq[T] {
+//	s.Cycle().Take(7) // yields: 1, 2, 3, 1, 2, 3, 1
+func (s Seq[T]) Cycle() Seq[T] {
 	return func(yield func(T) bool) {
 		has := false
 		s(func(T) bool {
@@ -33,6 +33,9 @@ func Cycle[T any](s Seq[T]) Seq[T] {
 }
 
 // Dedup removes consecutive duplicate elements.
+// It remains a free function because it requires T to be comparable,
+// which cannot be expressed as a constraint on the receiver's type parameter.
+// For a method-chained variant use DedupBy.
 //
 // Example:
 //
@@ -58,9 +61,9 @@ func Dedup[T comparable](s Seq[T]) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]string{"a", "aa", "b", "bb", "cc"})
-//	iter.DedupBy(s, func(a, b string) bool { return len(a) == len(b) })
+//	s.DedupBy(func(a, b string) bool { return len(a) == len(b) })
 //	// yields: "a", "b", "cc"
-func DedupBy[T any](s Seq[T], eq func(a, b T) bool) Seq[T] {
+func (s Seq[T]) DedupBy(eq func(a, b T) bool) Seq[T] {
 	return func(yield func(T) bool) {
 		var prev T
 		first := true
@@ -80,8 +83,8 @@ func DedupBy[T any](s Seq[T], eq func(a, b T) bool) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3})
-//	iter.Intersperse(s, 0) // yields: 1, 0, 2, 0, 3
-func Intersperse[T any](s Seq[T], sep T) Seq[T] {
+//	s.Intersperse(0) // yields: 1, 0, 2, 0, 3
+func (s Seq[T]) Intersperse(sep T) Seq[T] {
 	return func(yield func(T) bool) {
 		first := true
 		s(func(v T) bool {
@@ -97,6 +100,8 @@ func Intersperse[T any](s Seq[T], sep T) Seq[T] {
 }
 
 // Flatten flattens a sequence of slices into a single sequence.
+// It remains a free function because the element type of the receiver
+// cannot be constrained to a slice type.
 //
 // Example:
 //
@@ -116,6 +121,8 @@ func Flatten[T any](ss Seq[[]T]) Seq[T] {
 }
 
 // FlattenSeq flattens a sequence of sequences into a single sequence.
+// It remains a free function because the element type of the receiver
+// cannot be constrained to a sequence type.
 //
 // Example:
 //
@@ -141,6 +148,18 @@ func FlattenSeq[T any](ss Seq[Seq[T]]) Seq[T] {
 	}
 }
 
+// FlatMap applies a function producing a sequence to each element and flattens the results.
+// The result type may differ from the element type.
+//
+// Example:
+//
+//	s := iter.FromSlice([]int{1, 2, 3})
+//	s.FlatMap(func(x int) iter.Seq[int] { return iter.FromSlice([]int{x, x * 10}) })
+//	// yields: 1, 10, 2, 20, 3, 30
+func (s Seq[T]) FlatMap[U any](f func(T) Seq[U]) Seq[U] {
+	return FlattenSeq(s.Map(f))
+}
+
 // Combinations generates all combinations of k elements from the sequence.
 //
 // Example:
@@ -149,7 +168,7 @@ func FlattenSeq[T any](ss Seq[Seq[T]]) Seq[T] {
 //	iter.Combinations(s, 2) // yields: [1,2], [1,3], [1,4], [2,3], [2,4], [3,4]
 func Combinations[T any](s Seq[T], k int) Seq[[]T] {
 	return func(yield func([]T) bool) {
-		slice := ToSlice(s)
+		slice := s.ToSlice()
 		n := len(slice)
 
 		if k > n || k <= 0 {
@@ -196,7 +215,7 @@ func Combinations[T any](s Seq[T], k int) Seq[[]T] {
 //	iter.Permutations(s) // yields: [1,2,3], [1,3,2], [2,1,3], [2,3,1], [3,1,2], [3,2,1]
 func Permutations[T any](s Seq[T]) Seq[[]T] {
 	return func(yield func([]T) bool) {
-		slice := ToSlice(s)
+		slice := s.ToSlice()
 		n := len(slice)
 
 		if n == 0 {

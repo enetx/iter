@@ -9,14 +9,14 @@ import (
 
 func TestFromSlice(t *testing.T) {
 	// Test basic fromSlice operation
-	result := ToSlice(FromSlice([]int{1, 2, 3, 4, 5}))
+	result := FromSlice([]int{1, 2, 3, 4, 5}).ToSlice()
 	expected := []int{1, 2, 3, 4, 5}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("FromSlice() = %v, want %v", result, expected)
 	}
 
 	// Test fromSlice with empty slice
-	result2 := ToSlice(FromSlice([]int{}))
+	result2 := FromSlice([]int{}).ToSlice()
 	if len(result2) != 0 {
 		t.Errorf("FromSlice(empty) = %v, want empty slice", result2)
 	}
@@ -30,7 +30,7 @@ func TestFromChan(t *testing.T) {
 	ch <- 3
 	close(ch)
 
-	result := ToSlice(FromChan(ch))
+	result := FromChan(ch).ToSlice()
 	expected := []int{1, 2, 3}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("FromChan() = %v, want %v", result, expected)
@@ -40,7 +40,7 @@ func TestFromChan(t *testing.T) {
 func TestFromMap(t *testing.T) {
 	// Test fromMap operation
 	m := map[int]string{1: "a", 2: "b"}
-	result := ToPairs(FromMap(m))
+	result := FromMap(m).ToPairs()
 
 	// Since map iteration order is not guaranteed, check length and contents
 	if len(result) != 2 {
@@ -62,7 +62,7 @@ func TestFromChanEmpty(t *testing.T) {
 	ch := make(chan int)
 	close(ch)
 
-	result := ToSlice(FromChan(ch))
+	result := FromChan(ch).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("FromChan(empty) = %v, want empty slice", result)
 	}
@@ -104,7 +104,7 @@ func TestFromMapEarlyTermination(t *testing.T) {
 
 func TestFromSliceReverse(t *testing.T) {
 	// Test reverse operation
-	result := ToSlice(FromSliceReverse([]int{1, 2, 3, 4, 5}))
+	result := FromSliceReverse([]int{1, 2, 3, 4, 5}).ToSlice()
 	expected := []int{5, 4, 3, 2, 1}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("FromSliceReverse() = %v, want %v", result, expected)
@@ -113,7 +113,7 @@ func TestFromSliceReverse(t *testing.T) {
 
 func TestFromSliceReverseEmpty(t *testing.T) {
 	// Test reverse with empty sequence
-	result := ToSlice(FromSliceReverse([]int{}))
+	result := FromSliceReverse([]int{}).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("FromSliceReverse(empty) = %v, want empty slice", result)
 	}

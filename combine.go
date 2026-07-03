@@ -1,17 +1,17 @@
 package iter
 
-// Chain concatenates multiple sequences into one.
+// Chain concatenates this sequence with other sequences into one.
 //
 // Example:
 //
 //	s1 := iter.FromSlice([]int{1, 2})
 //	s2 := iter.FromSlice([]int{3, 4})
-//	iter.Chain(s1, s2) // yields: 1, 2, 3, 4
-func Chain[T any](head Seq[T], rest ...Seq[T]) Seq[T] {
+//	s1.Chain(s2) // yields: 1, 2, 3, 4
+func (s Seq[T]) Chain(rest ...Seq[T]) Seq[T] {
 	return func(yield func(T) bool) {
 		// Process head sequence
 		continueProcessing := true
-		head(func(v T) bool {
+		s(func(v T) bool {
 			if !yield(v) {
 				continueProcessing = false
 				return false
@@ -24,8 +24,8 @@ func Chain[T any](head Seq[T], rest ...Seq[T]) Seq[T] {
 		}
 
 		// Process rest sequences
-		for _, s := range rest {
-			s(func(v T) bool {
+		for _, r := range rest {
+			r(func(v T) bool {
 				if !yield(v) {
 					continueProcessing = false
 					return false
@@ -46,12 +46,12 @@ func Chain[T any](head Seq[T], rest ...Seq[T]) Seq[T] {
 //
 //	s1 := iter.FromSlice([]int{1, 2, 3})
 //	s2 := iter.FromSlice([]string{"a", "b"})
-//	iter.Zip(s1, s2) // yields: (1, "a"), (2, "b")
-func Zip[A, B any](a Seq[A], b Seq[B]) Seq2[A, B] {
-	return func(y func(A, B) bool) {
-		an, as := Pull(a)
+//	s1.Zip(s2) // yields: (1, "a"), (2, "b")
+func (s Seq[T]) Zip[B any](b Seq[B]) Seq2[T, B] {
+	return func(y func(T, B) bool) {
+		an, as := s.Pull()
 		defer as()
-		bn, bs := Pull(b)
+		bn, bs := b.Pull()
 		defer bs()
 		for {
 			av, ok := an()
@@ -75,12 +75,12 @@ func Zip[A, B any](a Seq[A], b Seq[B]) Seq2[A, B] {
 //
 //	s1 := iter.FromSlice([]int{1, 2, 3})
 //	s2 := iter.FromSlice([]int{10, 20, 30})
-//	iter.ZipWith(s1, s2, func(a, b int) int { return a + b }) // yields: 11, 22, 33
-func ZipWith[A, B, R any](a Seq[A], b Seq[B], f func(A, B) R) Seq[R] {
+//	s1.ZipWith(s2, func(a, b int) int { return a + b }) // yields: 11, 22, 33
+func (s Seq[T]) ZipWith[B, R any](b Seq[B], f func(T, B) R) Seq[R] {
 	return func(yield func(R) bool) {
-		an, as := Pull(a)
+		an, as := s.Pull()
 		defer as()
-		bn, bs := Pull(b)
+		bn, bs := b.Pull()
 		defer bs()
 		for {
 			av, ok := an()
@@ -98,18 +98,18 @@ func ZipWith[A, B, R any](a Seq[A], b Seq[B], f func(A, B) R) Seq[R] {
 	}
 }
 
-// Interleave alternates between elements from two sequences.
+// Interleave alternates between elements from this sequence and another.
 //
 // Example:
 //
 //	s1 := iter.FromSlice([]int{1, 2, 3})
 //	s2 := iter.FromSlice([]int{10, 20, 30})
-//	iter.Interleave(s1, s2) // yields: 1, 10, 2, 20, 3, 30
-func Interleave[T any](a, b Seq[T]) Seq[T] {
+//	s1.Interleave(s2) // yields: 1, 10, 2, 20, 3, 30
+func (s Seq[T]) Interleave(b Seq[T]) Seq[T] {
 	return func(yield func(T) bool) {
-		an, as := Pull(a)
+		an, as := s.Pull()
 		defer as()
-		bn, bs := Pull(b)
+		bn, bs := b.Pull()
 		defer bs()
 
 		for {
@@ -135,6 +135,8 @@ func Interleave[T any](a, b Seq[T]) Seq[T] {
 }
 
 // Windows returns a sequence of sliding windows of size n.
+// It remains a free function: a method returning Seq[[]T] would instantiate Seq
+// with a type containing the receiver's own type parameter, creating an instantiation cycle.
 //
 // Example:
 //
@@ -163,6 +165,8 @@ func Windows[T any](s Seq[T], n int) Seq[[]T] {
 }
 
 // Chunks returns a sequence of chunks of size n.
+// It remains a free function: a method returning Seq[[]T] would instantiate Seq
+// with a type containing the receiver's own type parameter, creating an instantiation cycle.
 //
 // Example:
 //
@@ -193,6 +197,8 @@ func Chunks[T any](s Seq[T], n int) Seq[[]T] {
 }
 
 // GroupByAdjacent groups consecutive elements that are considered the same by the comparison function.
+// It remains a free function: a method returning Seq[[]T] would instantiate Seq
+// with a type containing the receiver's own type parameter, creating an instantiation cycle.
 //
 // Example:
 //
@@ -238,18 +244,18 @@ func GroupByAdjacent[T any](s Seq[T], same func(a, b T) bool) Seq[[]T] {
 	}
 }
 
-// Chain2 concatenates multiple Seq2 sequences into one.
+// Chain concatenates this Seq2 sequence with other Seq2 sequences into one.
 //
 // Example:
 //
 //	s1 := iter.FromMap(map[int]string{1: "a"})
 //	s2 := iter.FromMap(map[int]string{2: "b"})
-//	iter.Chain2(s1, s2) // yields: (1, "a"), (2, "b")
-func Chain2[K, V any](head Seq2[K, V], rest ...Seq2[K, V]) Seq2[K, V] {
+//	s1.Chain(s2) // yields: (1, "a"), (2, "b")
+func (s Seq2[K, V]) Chain(rest ...Seq2[K, V]) Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		// Process head sequence
 		continueProcessing := true
-		head(func(k K, v V) bool {
+		s(func(k K, v V) bool {
 			if !yield(k, v) {
 				continueProcessing = false
 				return false
@@ -261,8 +267,8 @@ func Chain2[K, V any](head Seq2[K, V], rest ...Seq2[K, V]) Seq2[K, V] {
 			return
 		}
 
-		for _, s := range rest {
-			s(func(k K, v V) bool {
+		for _, r := range rest {
+			r(func(k K, v V) bool {
 				if !yield(k, v) {
 					continueProcessing = false
 					return false

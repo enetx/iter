@@ -9,7 +9,7 @@ import (
 
 func TestOnce(t *testing.T) {
 	// Test once operation
-	result := ToSlice(Once(42))
+	result := Once(42).ToSlice()
 	expected := []int{42}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Once() = %v, want %v", result, expected)
@@ -19,10 +19,10 @@ func TestOnce(t *testing.T) {
 func TestOnceWith(t *testing.T) {
 	// Test onceWith operation
 	called := 0
-	result := ToSlice(OnceWith(func() int {
+	result := OnceWith(func() int {
 		called++
 		return 42
-	}))
+	}).ToSlice()
 	expected := []int{42}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("OnceWith() = %v, want %v", result, expected)
@@ -34,7 +34,7 @@ func TestOnceWith(t *testing.T) {
 
 func TestEmpty(t *testing.T) {
 	// Test empty operation
-	result := ToSlice(Empty[int]())
+	result := Empty[int]().ToSlice()
 	if len(result) != 0 {
 		t.Errorf("Empty() = %v, want empty slice", result)
 	}
@@ -42,7 +42,7 @@ func TestEmpty(t *testing.T) {
 
 func TestRepeat(t *testing.T) {
 	// Test repeat operation
-	result := ToSlice(Take(Repeat(42), 5))
+	result := Repeat(42).Take(5).ToSlice()
 	expected := []int{42, 42, 42, 42, 42}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Repeat() = %v, want %v", result, expected)
@@ -52,10 +52,10 @@ func TestRepeat(t *testing.T) {
 func TestRepeatWith(t *testing.T) {
 	// Test repeatWith operation
 	count := 0
-	result := ToSlice(Take(RepeatWith(func() int {
+	result := RepeatWith(func() int {
 		count++
 		return count
-	}), 3))
+	}).Take(3).ToSlice()
 	expected := []int{1, 2, 3}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("RepeatWith() = %v, want %v", result, expected)
@@ -64,21 +64,21 @@ func TestRepeatWith(t *testing.T) {
 
 func TestIota(t *testing.T) {
 	// Test basic iota
-	result := ToSlice(Iota(1, 5))
+	result := Iota(1, 5).ToSlice()
 	expected := []int{1, 2, 3, 4}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Iota(1, 5) = %v, want %v", result, expected)
 	}
 
 	// Test iota with step
-	result2 := ToSlice(Iota(1, 10, 2))
+	result2 := Iota(1, 10, 2).ToSlice()
 	expected2 := []int{1, 3, 5, 7, 9}
 	if !reflect.DeepEqual(result2, expected2) {
 		t.Errorf("Iota(1, 10, 2) = %v, want %v", result2, expected2)
 	}
 
 	// Test iota empty range
-	result3 := ToSlice(Iota(5, 5))
+	result3 := Iota(5, 5).ToSlice()
 	if len(result3) != 0 {
 		t.Errorf("Iota(5, 5) = %v, want empty slice", result3)
 	}
@@ -86,14 +86,14 @@ func TestIota(t *testing.T) {
 
 func TestIotaInclusive(t *testing.T) {
 	// Test basic iota inclusive
-	result := ToSlice(IotaInclusive(1, 5))
+	result := IotaInclusive(1, 5).ToSlice()
 	expected := []int{1, 2, 3, 4, 5}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("IotaInclusive(1, 5) = %v, want %v", result, expected)
 	}
 
 	// Test iota inclusive with step
-	result2 := ToSlice(IotaInclusive(1, 9, 2))
+	result2 := IotaInclusive(1, 9, 2).ToSlice()
 	expected2 := []int{1, 3, 5, 7, 9}
 	if !reflect.DeepEqual(result2, expected2) {
 		t.Errorf("IotaInclusive(1, 9, 2) = %v, want %v", result2, expected2)
@@ -102,7 +102,7 @@ func TestIotaInclusive(t *testing.T) {
 
 func TestIotaNegativeStep(t *testing.T) {
 	// Test iota with negative step
-	result := ToSlice(Iota(5, 1, -1))
+	result := Iota(5, 1, -1).ToSlice()
 	expected := []int{5, 4, 3, 2}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Iota(5, 1, -1) = %v, want %v", result, expected)
@@ -111,7 +111,7 @@ func TestIotaNegativeStep(t *testing.T) {
 
 func TestIotaInclusiveNegativeStep(t *testing.T) {
 	// Test iota inclusive with negative step
-	result := ToSlice(IotaInclusive(5, 1, -1))
+	result := IotaInclusive(5, 1, -1).ToSlice()
 	expected := []int{5, 4, 3, 2, 1}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("IotaInclusive(5, 1, -1) = %v, want %v", result, expected)
@@ -168,7 +168,7 @@ func TestIotaInclusiveNegativeStepEarlyTermination(t *testing.T) {
 
 func TestIotaZeroStep(t *testing.T) {
 	// Test iota with zero step
-	result := ToSlice(Iota(1, 5, 0))
+	result := Iota(1, 5, 0).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("Iota(zero step) = %v, want empty slice", result)
 	}
@@ -176,7 +176,7 @@ func TestIotaZeroStep(t *testing.T) {
 
 func TestIotaInclusiveZeroStep(t *testing.T) {
 	// Test iota inclusive with zero step
-	result := ToSlice(IotaInclusive(1, 5, 0))
+	result := IotaInclusive(1, 5, 0).ToSlice()
 	if len(result) != 0 {
 		t.Errorf("IotaInclusive(zero step) = %v, want empty slice", result)
 	}

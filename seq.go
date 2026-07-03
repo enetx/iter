@@ -7,41 +7,38 @@ package iter
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	val, rest, ok := iter.Next(s)
+//	val, rest, ok := s.Next()
 //	// val = 1, ok = true
 //	// rest yields: 2, 3, 4, 5
 //
-//	val2, rest2, ok2 := iter.Next(rest)
+//	val2, rest2, ok2 := rest.Next()
 //	// val2 = 2, ok2 = true
 //	// rest2 yields: 3, 4, 5
-func Next[T any](s Seq[T]) (T, Seq[T], bool) {
-	var first T
-	found := false
-	consumed := false
+func (s Seq[T]) Next() (T, Seq[T], bool) {
+	next, stop := s.Pull()
 
-	s(func(v T) bool {
-		if !consumed {
-			first = v
-			found = true
-			consumed = true
-			return false
-		}
-		return true
-	})
-
-	if !found {
-		return first, nil, false
+	first, ok := next()
+	if !ok {
+		stop()
+		var zero T
+		return zero, nil, false
 	}
 
+	// The remaining sequence continues from the same pull iterator, so the source
+	// is walked exactly once. This makes Next O(1) per element and correct for
+	// non-deterministic sources (e.g. map-backed sets, channels), at the cost of
+	// the remaining sequence being single-use.
 	remaining := func(yield func(T) bool) {
-		skip := true
-		s(func(v T) bool {
-			if skip {
-				skip = false
-				return true
+		defer stop()
+		for {
+			v, ok := next()
+			if !ok {
+				return
 			}
-			return yield(v)
-		})
+			if !yield(v) {
+				return
+			}
+		}
 	}
 
 	return first, remaining, true
@@ -49,13 +46,12 @@ func Next[T any](s Seq[T]) (T, Seq[T], bool) {
 
 // First returns the first element from the sequence.
 // Returns (value, true) if an element exists, or (zero, false) if empty.
-// This is similar to Rust's Iterator::first() method.
 //
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	value, ok := iter.First(s) // 1, true
-func First[T any](s Seq[T]) (T, bool) {
+//	value, ok := s.First() // 1, true
+func (s Seq[T]) First() (T, bool) {
 	var result T
 	found := false
 	s(func(v T) bool {
@@ -68,13 +64,12 @@ func First[T any](s Seq[T]) (T, bool) {
 
 // Last returns the last element from the sequence.
 // Returns (value, true) if an element exists, or (zero, false) if empty.
-// This is similar to Rust's Iterator::last() method.
 //
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	value, ok := iter.Last(s) // 5, true
-func Last[T any](s Seq[T]) (T, bool) {
+//	value, ok := s.Last() // 5, true
+func (s Seq[T]) Last() (T, bool) {
 	var result T
 	found := false
 	s(func(v T) bool {
@@ -90,8 +85,8 @@ func Last[T any](s Seq[T]) (T, bool) {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3})
-//	iter.ForEach(s, func(x int) { fmt.Println(x) })
-func ForEach[T any](s Seq[T], fn func(T)) {
+//	s.ForEach(func(x int) { fmt.Println(x) })
+func (s Seq[T]) ForEach(fn func(T)) {
 	s(func(v T) bool { fn(v); return true })
 }
 
@@ -100,8 +95,8 @@ func ForEach[T any](s Seq[T], fn func(T)) {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3})
-//	count := iter.Count(s) // 3
-func Count[T any](s Seq[T]) int {
+//	count := s.Count() // 3
+func (s Seq[T]) Count() int {
 	count := 0
 	s(func(T) bool {
 		count++
@@ -116,19 +111,19 @@ func Count[T any](s Seq[T]) int {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	iter.Range(s, func(x int) bool {
+//	s.Range(func(x int) bool {
 //	  fmt.Println(x)
 //	  return x != 3 // Stop at 3
 //	})
-func Range[T any](s Seq[T], fn func(T) bool) { s(fn) }
+func (s Seq[T]) Range(fn func(T) bool) { s(fn) }
 
 // Take returns the first n elements of the sequence.
 //
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	iter.Take(s, 3) // yields: 1, 2, 3
-func Take[T any](s Seq[T], n int) Seq[T] {
+//	s.Take(3) // yields: 1, 2, 3
+func (s Seq[T]) Take(n int) Seq[T] {
 	return func(yield func(T) bool) {
 		if n <= 0 {
 			return
@@ -149,8 +144,8 @@ func Take[T any](s Seq[T], n int) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	iter.Skip(s, 2) // yields: 3, 4, 5
-func Skip[T any](s Seq[T], n int) Seq[T] {
+//	s.Skip(2) // yields: 3, 4, 5
+func (s Seq[T]) Skip(n int) Seq[T] {
 	return func(yield func(T) bool) {
 		if n <= 0 {
 			s(yield)
@@ -172,8 +167,8 @@ func Skip[T any](s Seq[T], n int) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5, 6})
-//	iter.StepBy(s, 2) // yields: 1, 3, 5
-func StepBy[T any](s Seq[T], step int) Seq[T] {
+//	s.StepBy(2) // yields: 1, 3, 5
+func (s Seq[T]) StepBy(step int) Seq[T] {
 	return func(yield func(T) bool) {
 		if step <= 0 {
 			return
@@ -196,8 +191,8 @@ func StepBy[T any](s Seq[T], step int) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	iter.TakeWhile(s, func(x int) bool { return x < 4 }) // yields: 1, 2, 3
-func TakeWhile[T any](s Seq[T], pred func(T) bool) Seq[T] {
+//	s.TakeWhile(func(x int) bool { return x < 4 }) // yields: 1, 2, 3
+func (s Seq[T]) TakeWhile(pred func(T) bool) Seq[T] {
 	return func(yield func(T) bool) {
 		s(func(v T) bool {
 			if !pred(v) {
@@ -213,8 +208,8 @@ func TakeWhile[T any](s Seq[T], pred func(T) bool) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	iter.SkipWhile(s, func(x int) bool { return x < 3 }) // yields: 3, 4, 5
-func SkipWhile[T any](s Seq[T], pred func(T) bool) Seq[T] {
+//	s.SkipWhile(func(x int) bool { return x < 3 }) // yields: 3, 4, 5
+func (s Seq[T]) SkipWhile(pred func(T) bool) Seq[T] {
 	return func(yield func(T) bool) {
 		skipping := true
 		s(func(v T) bool {
@@ -232,8 +227,8 @@ func SkipWhile[T any](s Seq[T], pred func(T) bool) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	value, ok := iter.Nth(s, 2) // 3, true
-func Nth[T any](s Seq[T], n int) (T, bool) {
+//	value, ok := s.Nth(2) // 3, true
+func (s Seq[T]) Nth(n int) (T, bool) {
 	var result T
 	found := false
 	index := 0
@@ -250,6 +245,8 @@ func Nth[T any](s Seq[T], n int) (T, bool) {
 }
 
 // Contains checks if the sequence contains the given value.
+// It remains a free function because it requires T to be comparable,
+// which cannot be expressed as a constraint on the receiver's type parameter.
 //
 // Example:
 //

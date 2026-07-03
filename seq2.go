@@ -2,64 +2,59 @@ package iter
 
 import "slices"
 
-// Next2 extracts the first key-value pair from the sequence and returns the remaining sequence.
+// Next extracts the first key-value pair from the sequence and returns the remaining sequence.
 // Returns (key, value, remainingSeq, true) if a pair exists, or (zeroK, zeroV, nil, false) if empty.
 // This is similar to Rust's Iterator::next() method for key-value pairs.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b", 3: "c"})
-//	k, v, rest, ok := iter.Next2(s)
+//	k, v, rest, ok := s.Next()
 //	// k = 1, v = "a", ok = true (order not guaranteed for maps)
 //	// rest yields remaining pairs
 //
-//	k2, v2, rest2, ok2 := iter.Next2(rest)
+//	k2, v2, rest2, ok2 := rest.Next()
 //	// k2 = 2, v2 = "b", ok2 = true
 //	// rest2 yields remaining pairs
-func Next2[K, V any](s Seq2[K, V]) (K, V, Seq2[K, V], bool) {
-	var firstK K
-	var firstV V
-	found := false
-	consumed := false
+func (s Seq2[K, V]) Next() (K, V, Seq2[K, V], bool) {
+	next, stop := s.Pull()
 
-	s(func(k K, v V) bool {
-		if !consumed {
-			firstK = k
-			firstV = v
-			found = true
-			consumed = true
-			return false
-		}
-		return true
-	})
-
-	if !found {
-		return firstK, firstV, nil, false
+	firstK, firstV, ok := next()
+	if !ok {
+		stop()
+		var zeroK K
+		var zeroV V
+		return zeroK, zeroV, nil, false
 	}
 
+	// The remaining sequence continues from the same pull iterator, so the source
+	// is walked exactly once. This makes Next O(1) per element and correct for
+	// non-deterministic sources (e.g. maps), at the cost of the remaining
+	// sequence being single-use.
 	remaining := func(yield func(K, V) bool) {
-		skip := true
-		s(func(k K, v V) bool {
-			if skip {
-				skip = false
-				return true
+		defer stop()
+		for {
+			k, v, ok := next()
+			if !ok {
+				return
 			}
-			return yield(k, v)
-		})
+			if !yield(k, v) {
+				return
+			}
+		}
 	}
 
 	return firstK, firstV, remaining, true
 }
 
-// First2 returns the first key-value pair from the sequence.
+// First returns the first key-value pair from the sequence.
 // Returns (key, value, true) if a pair exists, or (zeroK, zeroV, false) if empty.
-// This is similar to Rust's Iterator::first() method for key-value pairs.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b", 3: "c"})
-//	k, v, ok := iter.First2(s) // might return: 1, "a", true
-func First2[K, V any](s Seq2[K, V]) (K, V, bool) {
+//	k, v, ok := s.First() // might return: 1, "a", true
+func (s Seq2[K, V]) First() (K, V, bool) {
 	var resultK K
 	var resultV V
 	found := false
@@ -72,16 +67,15 @@ func First2[K, V any](s Seq2[K, V]) (K, V, bool) {
 	return resultK, resultV, found
 }
 
-// Last2 returns the last key-value pair from the sequence.
+// Last returns the last key-value pair from the sequence.
 // Returns (key, value, true) if a pair exists, or (zeroK, zeroV, false) if empty.
-// This is similar to Rust's Iterator::last() method for key-value pairs.
 //
 // Example:
 //
 //	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
 //	s := iter.FromPairs(pairs)
-//	k, v, ok := iter.Last2(s) // 3, "c", true
-func Last2[K, V any](s Seq2[K, V]) (K, V, bool) {
+//	k, v, ok := s.Last() // 3, "c", true
+func (s Seq2[K, V]) Last() (K, V, bool) {
 	var resultK K
 	var resultV V
 	found := false
@@ -94,48 +88,49 @@ func Last2[K, V any](s Seq2[K, V]) (K, V, bool) {
 	return resultK, resultV, found
 }
 
-// ForEach2 applies a function to each key-value pair in the sequence.
+// ForEach applies a function to each key-value pair in the sequence.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b"})
-//	iter.ForEach2(s, func(k int, v string) { fmt.Printf("%d: %s\n", k, v) })
-func ForEach2[K, V any](s Seq2[K, V], fn func(K, V)) {
+//	s.ForEach(func(k int, v string) { fmt.Printf("%d: %s\n", k, v) })
+func (s Seq2[K, V]) ForEach(fn func(K, V)) {
 	s(func(k K, v V) bool { fn(k, v); return true })
 }
 
-// Count2 returns the number of key-value pairs in the sequence.
+// Count returns the number of key-value pairs in the sequence.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b"})
-//	count := iter.Count2(s) // 2
-func Count2[K, V any](s Seq2[K, V]) int {
+//	count := s.Count() // 2
+func (s Seq2[K, V]) Count() int {
 	count := 0
 	s(func(K, V) bool { count++; return true })
 	return count
 }
 
-// Range2 applies a function to each key-value pair until it returns false.
+// Range applies a function to each key-value pair until it returns false.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b", 3: "c"})
-//	iter.Range2(s, func(k int, v string) bool {
+//	s.Range(func(k int, v string) bool {
 //	  fmt.Printf("%d: %s\n", k, v)
 //	  return k != 2 // Stop at key 2
 //	})
-func Range2[K, V any](s Seq2[K, V], fn func(K, V) bool) { s(fn) }
+func (s Seq2[K, V]) Range(fn func(K, V) bool) { s(fn) }
 
-// Map2 applies a function to each key-value pair, producing a new Seq2.
+// Map applies a function to each key-value pair, producing a new Seq2.
+// The key and value types of the result may differ from the input types.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b"})
-//	iter.Map2(s, func(k int, v string) (int, string) {
+//	s.Map(func(k int, v string) (int, string) {
 //	  return k*10, strings.ToUpper(v)
 //	}) // yields: (10, "A"), (20, "B")
-func Map2[K, V, K2, V2 any](s Seq2[K, V], f func(K, V) (K2, V2)) Seq2[K2, V2] {
+func (s Seq2[K, V]) Map[K2, V2 any](f func(K, V) (K2, V2)) Seq2[K2, V2] {
 	return func(yield func(K2, V2) bool) {
 		s(func(k K, v V) bool {
 			k2, v2 := f(k, v)
@@ -144,14 +139,14 @@ func Map2[K, V, K2, V2 any](s Seq2[K, V], f func(K, V) (K2, V2)) Seq2[K2, V2] {
 	}
 }
 
-// Filter2 returns a new Seq2 containing only pairs that satisfy the predicate.
+// Filter returns a new Seq2 containing only pairs that satisfy the predicate.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "bb", 3: "ccc"})
-//	iter.Filter2(s, func(k int, v string) bool { return len(v) > 1 })
+//	s.Filter(func(k int, v string) bool { return len(v) > 1 })
 //	// yields pairs where value length > 1
-func Filter2[K, V any](s Seq2[K, V], p func(K, V) bool) Seq2[K, V] {
+func (s Seq2[K, V]) Filter(p func(K, V) bool) Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		s(func(k K, v V) bool {
 			if p(k, v) {
@@ -162,14 +157,14 @@ func Filter2[K, V any](s Seq2[K, V], p func(K, V) bool) Seq2[K, V] {
 	}
 }
 
-// Exclude2 returns a new Seq2 containing only pairs that do not satisfy the predicate.
+// Exclude returns a new Seq2 containing only pairs that do not satisfy the predicate.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "bb", 3: "ccc"})
-//	iter.Exclude2(s, func(k int, v string) bool { return len(v) > 1 })
+//	s.Exclude(func(k int, v string) bool { return len(v) > 1 })
 //	// yields pairs where value length <= 1
-func Exclude2[K, V any](s Seq2[K, V], p func(K, V) bool) Seq2[K, V] {
+func (s Seq2[K, V]) Exclude(p func(K, V) bool) Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		s(func(k K, v V) bool {
 			if !p(k, v) {
@@ -180,18 +175,19 @@ func Exclude2[K, V any](s Seq2[K, V], p func(K, V) bool) Seq2[K, V] {
 	}
 }
 
-// FilterMap2 applies a function to each key-value pair and filters out None results.
+// FilterMap applies a function to each key-value pair and filters out pairs for which
+// it returns false. The key and value types of the result may differ from the input types.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "bb", 3: "ccc"})
-//	iter.FilterMap2(s, func(k int, v string) (Pair[int, string], bool) {
+//	s.FilterMap(func(k int, v string) (Pair[int, string], bool) {
 //	  if len(v) > 1 {
 //	    return Pair[int, string]{k*10, strings.ToUpper(v)}, true
 //	  }
 //	  return Pair[int, string]{}, false
 //	}) // yields: (20, "BB"), (30, "CCC")
-func FilterMap2[K, V, K2, V2 any](s Seq2[K, V], f func(K, V) (Pair[K2, V2], bool)) Seq2[K2, V2] {
+func (s Seq2[K, V]) FilterMap[K2, V2 any](f func(K, V) (Pair[K2, V2], bool)) Seq2[K2, V2] {
 	return func(yield func(K2, V2) bool) {
 		s(func(k K, v V) bool {
 			if pair, ok := f(k, v); ok {
@@ -202,14 +198,14 @@ func FilterMap2[K, V, K2, V2 any](s Seq2[K, V], f func(K, V) (Pair[K2, V2], bool
 	}
 }
 
-// Find2 returns the first key-value pair that satisfies the predicate.
+// Find returns the first key-value pair that satisfies the predicate.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "bb", 3: "ccc"})
-//	k, v, ok := iter.Find2(s, func(k int, v string) bool { return len(v) > 1 })
+//	k, v, ok := s.Find(func(k int, v string) bool { return len(v) > 1 })
 //	// might return: 2, "bb", true
-func Find2[K, V any](s Seq2[K, V], p func(K, V) bool) (K, V, bool) {
+func (s Seq2[K, V]) Find(p func(K, V) bool) (K, V, bool) {
 	var resultK K
 	var resultV V
 	found := false
@@ -230,8 +226,8 @@ func Find2[K, V any](s Seq2[K, V], p func(K, V) bool) (K, V, bool) {
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b"})
-//	iter.Keys(s) // yields: 1, 2 (order not guaranteed)
-func Keys[K, V any](s Seq2[K, V]) Seq[K] {
+//	s.Keys() // yields: 1, 2 (order not guaranteed)
+func (s Seq2[K, V]) Keys() Seq[K] {
 	return func(y func(K) bool) { s(func(k K, _ V) bool { return y(k) }) }
 }
 
@@ -240,14 +236,14 @@ func Keys[K, V any](s Seq2[K, V]) Seq[K] {
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b"})
-//	iter.Values(s) // yields: "a", "b" (order not guaranteed)
-func Values[K, V any](s Seq2[K, V]) Seq[V] {
+//	s.Values() // yields: "a", "b" (order not guaranteed)
+func (s Seq2[K, V]) Values() Seq[V] {
 	return func(y func(V) bool) { s(func(_ K, v V) bool { return y(v) }) }
 }
 
 // OrderByKey sorts the sequence by keys using the comparison function.
-func OrderByKey[K, V any](s Seq2[K, V], less func(a, b K) bool) Seq2[K, V] {
-	buf := ToPairs(s)
+func (s Seq2[K, V]) OrderByKey(less func(a, b K) bool) Seq2[K, V] {
+	buf := s.ToPairs()
 	slices.SortFunc(buf, func(a, b Pair[K, V]) int {
 		switch {
 		case less(a.Key, b.Key):
@@ -262,8 +258,8 @@ func OrderByKey[K, V any](s Seq2[K, V], less func(a, b K) bool) Seq2[K, V] {
 }
 
 // OrderByValue sorts the sequence by values using the comparison function.
-func OrderByValue[K, V any](s Seq2[K, V], less func(a, b V) bool) Seq2[K, V] {
-	buf := ToPairs(s)
+func (s Seq2[K, V]) OrderByValue(less func(a, b V) bool) Seq2[K, V] {
+	buf := s.ToPairs()
 	slices.SortFunc(buf, func(a, b Pair[K, V]) int {
 		switch {
 		case less(a.Value, b.Value):
@@ -277,13 +273,13 @@ func OrderByValue[K, V any](s Seq2[K, V], less func(a, b V) bool) Seq2[K, V] {
 	return FromPairs(buf)
 }
 
-// Take2 returns the first n key-value pairs of the sequence.
+// Take returns the first n key-value pairs of the sequence.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b", 3: "c"})
-//	iter.Take2(s, 2) // yields first 2 pairs
-func Take2[K, V any](s Seq2[K, V], n int) Seq2[K, V] {
+//	s.Take(2) // yields first 2 pairs
+func (s Seq2[K, V]) Take(n int) Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		if n <= 0 {
 			return
@@ -299,13 +295,13 @@ func Take2[K, V any](s Seq2[K, V], n int) Seq2[K, V] {
 	}
 }
 
-// Skip2 skips the first n key-value pairs and returns the rest.
+// Skip skips the first n key-value pairs and returns the rest.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b", 3: "c"})
-//	iter.Skip2(s, 1) // yields all pairs except the first
-func Skip2[K, V any](s Seq2[K, V], n int) Seq2[K, V] {
+//	s.Skip(1) // yields all pairs except the first
+func (s Seq2[K, V]) Skip(n int) Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		if n <= 0 {
 			s(yield)
@@ -322,14 +318,14 @@ func Skip2[K, V any](s Seq2[K, V], n int) Seq2[K, V] {
 	}
 }
 
-// StepBy2 returns every nth key-value pair from the sequence.
+// StepBy returns every nth key-value pair from the sequence.
 //
 // Example:
 //
 //	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}, {4, "d"}}
 //	s := iter.FromPairs(pairs)
-//	iter.StepBy2(s, 2) // yields: (1, "a"), (3, "c")
-func StepBy2[K, V any](s Seq2[K, V], step int) Seq2[K, V] {
+//	s.StepBy(2) // yields: (1, "a"), (3, "c")
+func (s Seq2[K, V]) StepBy(step int) Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		if step <= 0 {
 			return
@@ -347,9 +343,9 @@ func StepBy2[K, V any](s Seq2[K, V], step int) Seq2[K, V] {
 	}
 }
 
-// SortBy2 sorts the sequence using the provided comparison function on Pair pairs.
-func SortBy2[K, V any](s Seq2[K, V], less func(a, b Pair[K, V]) bool) Seq2[K, V] {
-	buf := ToPairs(s)
+// SortBy sorts the sequence using the provided comparison function on Pair pairs.
+func (s Seq2[K, V]) SortBy(less func(a, b Pair[K, V]) bool) Seq2[K, V] {
+	buf := s.ToPairs()
 	slices.SortFunc(buf, func(a, b Pair[K, V]) int {
 		if less(a, b) {
 			return -1
@@ -362,23 +358,23 @@ func SortBy2[K, V any](s Seq2[K, V], less func(a, b Pair[K, V]) bool) Seq2[K, V]
 	return FromPairs(buf)
 }
 
-// Inspect2 applies a function to each key-value pair for side effects while passing through the original pairs.
+// Inspect applies a function to each key-value pair for side effects while passing through the original pairs.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b"})
-//	iter.Inspect2(s, func(k int, v string) { fmt.Printf("Processing: %d=%s\n", k, v) })
-func Inspect2[K, V any](s Seq2[K, V], fn func(K, V)) Seq2[K, V] {
+//	s.Inspect(func(k int, v string) { fmt.Printf("Processing: %d=%s\n", k, v) })
+func (s Seq2[K, V]) Inspect(fn func(K, V)) Seq2[K, V] {
 	return func(yield func(K, V) bool) { s(func(k K, v V) bool { fn(k, v); return yield(k, v) }) }
 }
 
-// Any2 returns true if any key-value pair satisfies the predicate.
+// Any returns true if any key-value pair satisfies the predicate.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "bb"})
-//	hasLongValue := iter.Any2(s, func(k int, v string) bool { return len(v) > 1 }) // true
-func Any2[K, V any](s Seq2[K, V], p func(K, V) bool) bool {
+//	hasLongValue := s.Any(func(k int, v string) bool { return len(v) > 1 }) // true
+func (s Seq2[K, V]) Any(p func(K, V) bool) bool {
 	found := false
 	s(func(k K, v V) bool {
 		if p(k, v) {
@@ -390,13 +386,13 @@ func Any2[K, V any](s Seq2[K, V], p func(K, V) bool) bool {
 	return found
 }
 
-// All2 returns true if all key-value pairs satisfy the predicate.
+// All returns true if all key-value pairs satisfy the predicate.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]string{1: "a", 2: "b"})
-//	allShortValues := iter.All2(s, func(k int, v string) bool { return len(v) == 1 }) // true
-func All2[K, V any](s Seq2[K, V], p func(K, V) bool) bool {
+//	allShortValues := s.All(func(k int, v string) bool { return len(v) == 1 }) // true
+func (s Seq2[K, V]) All(p func(K, V) bool) bool {
 	all := true
 	s(func(k K, v V) bool {
 		if !p(k, v) {
@@ -408,27 +404,28 @@ func All2[K, V any](s Seq2[K, V], p func(K, V) bool) bool {
 	return all
 }
 
-// Fold2 reduces the Seq2 to a single value using an accumulator.
+// Fold reduces the Seq2 to a single value using an accumulator.
+// The accumulator type may differ from the key and value types.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]int{1: 10, 2: 20, 3: 30})
-//	sum := iter.Fold2(s, 0, func(acc, k, v int) int { return acc + k + v }) // 66
-func Fold2[K, V, A any](s Seq2[K, V], acc A, f func(A, K, V) A) A {
+//	sum := s.Fold(0, func(acc, k, v int) int { return acc + k + v }) // 66
+func (s Seq2[K, V]) Fold[A any](acc A, f func(A, K, V) A) A {
 	s(func(k K, v V) bool { acc = f(acc, k, v); return true })
 	return acc
 }
 
-// Reduce2 reduces the Seq2 to a single Pair pair.
+// Reduce reduces the Seq2 to a single Pair pair.
 // Returns false if the sequence is empty.
 //
 // Example:
 //
 //	s := iter.FromMap(map[int]int{1: 10, 2: 20})
-//	result, ok := iter.Reduce2(s, func(a, b Pair[int, int]) Pair[int, int] {
+//	result, ok := s.Reduce(func(a, b Pair[int, int]) Pair[int, int] {
 //	  return Pair[int, int]{a.Key + b.Key, a.Value + b.Value}
 //	}) // Pair{3, 30}, true
-func Reduce2[K, V any](s Seq2[K, V], f func(Pair[K, V], Pair[K, V]) Pair[K, V]) (Pair[K, V], bool) {
+func (s Seq2[K, V]) Reduce(f func(Pair[K, V], Pair[K, V]) Pair[K, V]) (Pair[K, V], bool) {
 	var result Pair[K, V]
 	first := true
 	s(func(k K, v V) bool {
@@ -444,14 +441,14 @@ func Reduce2[K, V any](s Seq2[K, V], f func(Pair[K, V], Pair[K, V]) Pair[K, V]) 
 	return result, !first
 }
 
-// Nth2 returns the nth key-value pair (0-indexed) from the sequence.
+// Nth returns the nth key-value pair (0-indexed) from the sequence.
 //
 // Example:
 //
 //	pairs := []Pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
 //	s := iter.FromPairs(pairs)
-//	k, v, ok := iter.Nth2(s, 1) // 2, "b", true
-func Nth2[K, V any](s Seq2[K, V], n int) (K, V, bool) {
+//	k, v, ok := s.Nth(1) // 2, "b", true
+func (s Seq2[K, V]) Nth(n int) (K, V, bool) {
 	var resultK K
 	var resultV V
 	found := false

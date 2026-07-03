@@ -1,22 +1,14 @@
 package iter
 
-// Map applies a function to each element, producing a new sequence of the same type.
+// Map applies a function to each element, producing a new sequence.
+// The result type may differ from the element type.
 //
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3})
-//	iter.Map(s, func(x int) int { return x * 2 }) // yields: 2, 4, 6
-func Map[T any](s Seq[T], f func(T) T) Seq[T] {
-	return func(yield func(T) bool) { s(func(v T) bool { return yield(f(v)) }) }
-}
-
-// MapTo applies a function to each element, producing a new sequence of potentially different type.
-//
-// Example:
-//
-//	s := iter.FromSlice([]int{1, 2, 3})
-//	iter.MapTo(s, func(x int) string { return fmt.Sprintf("%d", x) }) // yields: "1", "2", "3"
-func MapTo[T, U any](s Seq[T], f func(T) U) Seq[U] {
+//	s.Map(func(x int) int { return x * 2 }) // yields: 2, 4, 6
+//	s.Map(func(x int) string { return fmt.Sprintf("%d", x) }) // yields: "1", "2", "3"
+func (s Seq[T]) Map[U any](f func(T) U) Seq[U] {
 	return func(yield func(U) bool) { s(func(v T) bool { return yield(f(v)) }) }
 }
 
@@ -25,8 +17,8 @@ func MapTo[T, U any](s Seq[T], f func(T) U) Seq[U] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3})
-//	iter.Inspect(s, func(x int) { fmt.Printf("Processing: %d\n", x) })
-func Inspect[T any](s Seq[T], fn func(T)) Seq[T] {
+//	s.Inspect(func(x int) { fmt.Printf("Processing: %d\n", x) })
+func (s Seq[T]) Inspect(fn func(T)) Seq[T] {
 	return func(yield func(T) bool) { s(func(v T) bool { fn(v); return yield(v) }) }
 }
 
@@ -35,8 +27,8 @@ func Inspect[T any](s Seq[T], fn func(T)) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	iter.Filter(s, func(x int) bool { return x%2 == 0 }) // yields: 2, 4
-func Filter[T any](s Seq[T], p func(T) bool) Seq[T] {
+//	s.Filter(func(x int) bool { return x%2 == 0 }) // yields: 2, 4
+func (s Seq[T]) Filter(p func(T) bool) Seq[T] {
 	return func(yield func(T) bool) {
 		s(func(v T) bool {
 			if p(v) {
@@ -52,8 +44,8 @@ func Filter[T any](s Seq[T], p func(T) bool) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4, 5})
-//	iter.Exclude(s, func(x int) bool { return x%2 == 0 }) // yields: 1, 3, 5
-func Exclude[T any](s Seq[T], p func(T) bool) Seq[T] {
+//	s.Exclude(func(x int) bool { return x%2 == 0 }) // yields: 1, 3, 5
+func (s Seq[T]) Exclude(p func(T) bool) Seq[T] {
 	return func(yield func(T) bool) {
 		s(func(v T) bool {
 			if !p(v) {
@@ -64,18 +56,19 @@ func Exclude[T any](s Seq[T], p func(T) bool) Seq[T] {
 	}
 }
 
-// FilterMap applies a function to each element and filters out None results.
+// FilterMap applies a function to each element and filters out elements for which it returns false.
+// The result type may differ from the element type.
 //
 // Example:
 //
 //	s := iter.FromSlice([]string{"1", "2", "abc", "3"})
-//	iter.FilterMap(s, func(s string) (int, bool) {
+//	s.FilterMap(func(s string) (int, bool) {
 //	  if i, err := strconv.Atoi(s); err == nil {
 //	    return i, true
 //	  }
 //	  return 0, false
 //	}) // yields: 1, 2, 3
-func FilterMap[T, U any](s Seq[T], f func(T) (U, bool)) Seq[U] {
+func (s Seq[T]) FilterMap[U any](f func(T) (U, bool)) Seq[U] {
 	return func(yield func(U) bool) {
 		s(func(v T) bool {
 			if u, ok := f(v); ok {
@@ -86,16 +79,17 @@ func FilterMap[T, U any](s Seq[T], f func(T) (U, bool)) Seq[U] {
 	}
 }
 
-// MapWhile applies a function to elements while it returns Some, stopping at the first None.
+// MapWhile applies a function to elements while it returns true, stopping at the first false.
+// The result type may differ from the element type.
 //
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, -1, 4})
-//	iter.MapWhile(s, func(x int) (int, bool) {
+//	s.MapWhile(func(x int) (int, bool) {
 //	  if x > 0 { return x * 2, true }
 //	  return 0, false
 //	}) // yields: 2, 4
-func MapWhile[T, U any](s Seq[T], f func(T) (U, bool)) Seq[U] {
+func (s Seq[T]) MapWhile[U any](f func(T) (U, bool)) Seq[U] {
 	return func(yield func(U) bool) {
 		s(func(v T) bool {
 			if u, ok := f(v); ok {
@@ -111,8 +105,8 @@ func MapWhile[T, U any](s Seq[T], f func(T) (U, bool)) Seq[U] {
 // Example:
 //
 //	s := iter.FromSlice([]string{"a", "b", "c"})
-//	iter.Enumerate(s, 0) // yields: (0, "a"), (1, "b"), (2, "c")
-func Enumerate[T any](s Seq[T], start int) Seq2[int, T] {
+//	s.Enumerate(0) // yields: (0, "a"), (1, "b"), (2, "c")
+func (s Seq[T]) Enumerate(start int) Seq2[int, T] {
 	return func(yield func(int, T) bool) {
 		index := start
 		s(func(v T) bool {
@@ -124,12 +118,13 @@ func Enumerate[T any](s Seq[T], start int) Seq2[int, T] {
 }
 
 // Scan is similar to Fold, but emits intermediate accumulator values.
+// The accumulator type may differ from the element type.
 //
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 2, 3, 4})
-//	iter.Scan(s, 0, func(acc, x int) int { return acc + x }) // yields: 1, 3, 6, 10
-func Scan[T, S any](s Seq[T], init S, f func(S, T) S) Seq[S] {
+//	s.Scan(0, func(acc, x int) int { return acc + x }) // yields: 1, 3, 6, 10
+func (s Seq[T]) Scan[S any](init S, f func(S, T) S) Seq[S] {
 	return func(yield func(S) bool) {
 		acc := init
 		s(func(v T) bool {
@@ -145,8 +140,8 @@ func Scan[T, S any](s Seq[T], init S, f func(S, T) S) Seq[S] {
 // Example:
 //
 //	s := iter.FromSlice([]int{1, 1, 2, 2, 3, 1})
-//	iter.Unique(s) // yields: 1, 2, 3
-func Unique[T any](s Seq[T]) Seq[T] {
+//	s.Unique() // yields: 1, 2, 3
+func (s Seq[T]) Unique() Seq[T] {
 	return func(yield func(T) bool) {
 		seen := make(map[any]struct{})
 		s(func(v T) bool {
@@ -164,8 +159,8 @@ func Unique[T any](s Seq[T]) Seq[T] {
 // Example:
 //
 //	s := iter.FromSlice([]string{"aa", "bb", "a", "ccc"})
-//	iter.UniqueBy(s, func(s string) int { return len(s) }) // yields: "aa", "a", "ccc"
-func UniqueBy[T any, K comparable](s Seq[T], key func(T) K) Seq[T] {
+//	s.UniqueBy(func(s string) int { return len(s) }) // yields: "aa", "a", "ccc"
+func (s Seq[T]) UniqueBy[K comparable](key func(T) K) Seq[T] {
 	return func(yield func(T) bool) {
 		var prevKey K
 		first := true
